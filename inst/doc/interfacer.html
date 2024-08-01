@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Dataframe validation</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Dataframe validation</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(interfacer)</span></code></pre></div>
+<div id="rationale" class="section level1">
+<h1>Rationale</h1>
+<p><code>interfacer</code> is designed to support package authors who
+wish to use dataframes as input parameters to package functions. In this
+case assumptions about the structure of the input dataframe, in terms of
+expected column names, expected column data types, and expected grouping
+structure is a common problem that leads to a lot of code to validate
+input and detect edge cases in grouping, and creates the requirement for
+detailed documentation about the nature of accepted input
+dataframes.</p>
+<p><code>interfacer</code> provides a mechanism for simply specifying
+input dataframe constraints as an <code>iface</code> specification, a
+one liner for validating input, and an <code>roxygen2</code> tag for
+automating documentation of dataframe inputs. This is not dissimilar
+conceptually to the definition of a table in a relational database, or
+the specification of an XML schema.</p>
+<p><code>interfacer</code> also provides capabilities that support
+checking dataframe function outputs, dispatching to functions based on
+dataframe input structure, and flexibly handling unexpectedly grouped
+data.</p>
+</div>
+<div id="defining-an-interface" class="section level1">
+<h1>Defining an interface</h1>
+<p>An <code>iface</code> specification defines the structure of
+acceptable dataframes. It is a list of column names, plus types and some
+documentation about the column.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>i_test <span class="ot">=</span> <span class="fu">iface</span>(</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>  <span class="at">id =</span> integer <span class="sc">~</span> <span class="st">&quot;an integer ID&quot;</span>,</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  <span class="at">test =</span> logical <span class="sc">~</span> <span class="st">&quot;the test result&quot;</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>)</span></code></pre></div>
+<p>Printing an interface specification shows the structure that the
+<code>iface</code> defines.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">print</span>(i_test))</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co">#&gt; A dataframe containing the following columns: </span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co">#&gt; * id (integer) - an integer ID</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co">#&gt; * test (logical) - the test result</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co">#&gt; No mandatory groupings.</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt; No default value.</span></span></code></pre></div>
+<p>An <code>iface</code> specification is associated with a specific
+function parameter by being set as the default value for that parameter.
+This is a dummy default value but when combined with
+<code>ivalidate</code> in the function body a user supplied dataframe is
+validated to ensure it is of the right shape. We can use
+<code>@iparam &lt;param&gt; &lt;description&gt;</code> in the
+<code>roxygen2</code> documentation to describe the dataframe
+constraints.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co">#&#39; An example function</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co">#&#39;</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&#39; @iparam mydata a dataframe input which should conform to `i_test`</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&#39; @param another an example</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&#39; @param ... not used</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&#39;</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&#39; @return the conformant dataframe</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&#39; @export</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>example_fn <span class="ot">=</span> <span class="cf">function</span>(</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>  <span class="at">mydata =</span> i_test,</span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>  <span class="at">another =</span> <span class="st">&quot;value&quot;</span>,</span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>  ...</span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a>) {</span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a>  mydata <span class="ot">=</span> <span class="fu">ivalidate</span>(mydata)</span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a>  <span class="fu">return</span>(mydata)</span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a>}</span></code></pre></div>
+<p>In this case when we later call <code>example_fn</code> the data is
+checked against the requirements by <code>ivalidate</code>, and if
+acceptable passed on to the rest of the function body (in this case it
+does nothing and the validated input is returned).</p>
+<p>If we call this function with data that conforms the validation
+succeeds and the validated input data is returned.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>example_data <span class="ot">=</span> tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>    <span class="at">id =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>), <span class="co"># this is a numeric vector</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>    <span class="at">test =</span> <span class="fu">c</span>(<span class="cn">TRUE</span>,<span class="cn">FALSE</span>,<span class="cn">TRUE</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  )</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co"># this returns the qualifying data</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="fu">example_fn</span>(</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>  example_data, </span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>  <span class="st">&quot;value for another&quot;</span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>) <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">glimpse</span>()</span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt; Rows: 3</span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt; Columns: 2</span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt; $ id   &lt;int&gt; 1, 2, 3</span></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt; $ test &lt;lgl&gt; TRUE, FALSE, TRUE</span></span></code></pre></div>
+<p>It should be noted that although we passed a numeric vector in the
+<code>id</code> column to the function it has been coerced into an
+<code>int</code> vector by <code>ivalidate</code>. Data type checking in
+<code>interfacer</code> is permissive in that if something can be
+coerced without warning it will be.</p>
+<p>If we pass non-conformant data <code>ivalidate</code> throws an
+informative error about what is wrong with the data. In this case the
+<code>test</code> column is missing:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>bad_example_data <span class="ot">=</span> tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>    <span class="at">id =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>),</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>    <span class="at">wrong_name =</span> <span class="fu">c</span>(<span class="cn">TRUE</span>,<span class="cn">FALSE</span>,<span class="cn">TRUE</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  )</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="co"># this causes an error as example_data_2$wrong_test is wrongly named</span></span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="fu">try</span>(<span class="fu">example_fn</span>(</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>  bad_example_data, </span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>  <span class="st">&quot;value for another&quot;</span></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>))</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="co">#&gt; Error : missing columns in the `mydata` parameter of `example_fn(...)`.</span></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co">#&gt; missing: test</span></span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="co">#&gt; consider renaming / creating missing columns before calling `example_fn(...)`</span></span></code></pre></div>
+<p>We can recover from this error by renaming the columns before passing
+<code>bad_example_data</code> to <code>example_fn()</code>.</p>
+<p>In a second example the input data frame is non-conformant to the
+specification as the id column cannot be coerced to an integer.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>bad_example_data_2 <span class="ot">=</span> tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>    <span class="at">id =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="fl">2.1</span>, <span class="dv">3</span>), <span class="co"># cannot be cleanly coerced to integer.</span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>    <span class="at">test =</span> <span class="fu">c</span>(<span class="cn">TRUE</span>,<span class="cn">FALSE</span>,<span class="cn">TRUE</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  )</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="fu">try</span>(<span class="fu">example_fn</span>(</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>  bad_example_data_2, </span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>  <span class="st">&quot;value for another&quot;</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>))</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="co">#&gt; Error : input column `id` in function parameter `example_fn(mydata = ?)` cannot be coerced to a integer: not a true integer input</span></span></code></pre></div>
+<p>This error aims to be informative enough for the user to fix the
+problem.</p>
+</div>
+<div id="extension-and-composition" class="section level1">
+<h1>Extension and composition</h1>
+<p>Interface specifications can be composed and extended. In this case
+an extension of the <code>i_test</code> specification can be
+created:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>i_test_extn <span class="ot">=</span> <span class="fu">iface</span>(</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  i_test,</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="at">extra =</span> character <span class="sc">~</span> <span class="st">&quot;a new value&quot;</span>,</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="at">.groups =</span> <span class="cn">FALSE</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>)</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="fu">print</span>(i_test_extn)</span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="co">#&gt; A dataframe containing the following columns: </span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co">#&gt; * id (integer) - an integer ID</span></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co">#&gt; * test (logical) - the test result</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="co">#&gt; * extra (character) - a new value</span></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="co">#&gt; Ungrouped.</span></span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="co">#&gt; No default value.</span></span></code></pre></div>
+<p>This extended <code>iface</code> specification adds in the constraint
+for a character column named <code>extra</code> and that there must not
+be any grouping. This is used to constrain the input of another example
+function as before. We also constrain the output of this second function
+to be conformant to the original specification using
+<code>ireturn</code>. Examples of documenting the input parameter and
+the output parameter are provided here:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="co">#&#39; Another example function </span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co">#&#39; </span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&#39; @iparam mydata a more constrained input</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">#&#39; @param another an example   </span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">#&#39; @param ... not used</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co">#&#39;</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co">#&#39; @return `r i_test`</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="co">#&#39; @export</span></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>example_fn2 <span class="ot">=</span> <span class="cf">function</span>(</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>    <span class="at">mydata =</span> i_test_extn,</span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>    ...</span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>) {</span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a>  mydata <span class="ot">=</span> <span class="fu">ivalidate</span>(mydata, ..., <span class="at">.prune =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a>  mydata <span class="ot">=</span> mydata <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="sc">-</span>extra)</span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a>  <span class="co"># check the return value conforms to a new specification</span></span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a>  <span class="fu">ireturn</span>(mydata, i_test)</span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a>}</span></code></pre></div>
+<p>In this case the <code>ivalidate</code> call prunes unneeded data
+from the dataframe, removing any extra columns, and also ensures that
+the input is not grouped in any way. (Grouping is described in more
+detail below.)</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>grouped_example_data <span class="ot">=</span> tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>    <span class="at">id =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>),</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>    <span class="at">test =</span> <span class="fu">c</span>(<span class="cn">TRUE</span>,<span class="cn">FALSE</span>,<span class="cn">TRUE</span>),</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>    <span class="at">extra =</span> <span class="fu">c</span>(<span class="st">&quot;a&quot;</span>,<span class="st">&quot;b&quot;</span>,<span class="st">&quot;c&quot;</span>),</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>    <span class="at">unneeded =</span> <span class="fu">c</span>(<span class="st">&quot;x&quot;</span>,<span class="st">&quot;y&quot;</span>,<span class="st">&quot;z&quot;</span>)</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">group_by</span>(id)</span></code></pre></div>
+<p>This is rejected because the grouping is incorrect. An informative
+error message is provided:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">try</span>(<span class="fu">example_fn2</span>(grouped_example_data))</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="co">#&gt; Error : unexpected additional groups in `mydata` parameter of `example_fn2(...)`</span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="co">#&gt; additional: id</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="co">#&gt; consider regrouping your data before calling function `example_fn2(...)`, e.g.:</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co">#&gt; `df %&gt;% ungroup() %&gt;% example_fn2(...)`</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="co">#&gt; or calling function `example_fn2(...)` using a group_modify, e.g.:</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co">#&gt; `df %&gt;% group_by(id) %&gt;% group_modify(example_fn2, ...)`</span></span></code></pre></div>
+<p>Following the instructions in the error message makes this previously
+failing data validate against <code>i_test_extn</code>:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>grouped_example_data <span class="sc">%&gt;%</span> </span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">ungroup</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="fu">example_fn2</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">glimpse</span>()</span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="co">#&gt; Rows: 3</span></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a><span class="co">#&gt; Columns: 2</span></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="co">#&gt; $ id   &lt;int&gt; 1, 2, 3</span></span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="co">#&gt; $ test &lt;lgl&gt; TRUE, FALSE, TRUE</span></span></code></pre></div>
+</div>
+<div id="grouping" class="section level1">
+<h1>Grouping</h1>
+<p>Unanticipated grouping is a common cause of unexpected behaviour in
+functions that operate on dataframes. <code>interfacer</code> can also
+specify what degree of grouping is expected. This can take the form of
+constraints that a) enforce that no grouping is present, or b) enforce
+that the dataframe is grouped by exactly a given set of columns, or c)
+enforce that a data frame is grouped by at least a given set of columns
+(with possibly more).</p>
+<p>An <code>iface</code> specification can permissive or dogmatic about
+the grouping of the input. If the .groups option in an
+<code>iface</code> specification is NULL (e.g.
+<code>iface(..., .groups=NULL)</code>) then any grouping is allowed. If
+it is <code>FALSE</code> then no grouping is allowed. The third option
+is to supply a one sided formula. In this case the variables in the
+formula define the grouping that must be exactly present,
+e.g. <code>~ grp1 + grp2</code>, but if it also includes a
+<code>.</code>, then additional grouping is also permitted
+(e.g. <code>~ . + grp1 + grp2</code>). This permissive form would allow
+a grouping such as
+<code>df %&gt;% group_by(anything, grp1, grp2)</code>.</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>i_diamonds <span class="ot">=</span> interfacer<span class="sc">::</span><span class="fu">iface</span>(</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>    <span class="at">carat =</span> numeric <span class="sc">~</span> <span class="st">&quot;the carat column&quot;</span>,</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>    <span class="at">color =</span> <span class="fu">enum</span>(<span class="st">`</span><span class="at">D</span><span class="st">`</span>,<span class="st">`</span><span class="at">E</span><span class="st">`</span>,<span class="st">`</span><span class="at">F</span><span class="st">`</span>,<span class="st">`</span><span class="at">G</span><span class="st">`</span>,<span class="st">`</span><span class="at">H</span><span class="st">`</span>,<span class="st">`</span><span class="at">I</span><span class="st">`</span>,<span class="st">`</span><span class="at">J</span><span class="st">`</span>, <span class="at">.ordered=</span><span class="cn">TRUE</span>) <span class="sc">~</span> <span class="st">&quot;the color column&quot;</span>,</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>    <span class="at">x =</span> numeric <span class="sc">~</span> <span class="st">&quot;the x column&quot;</span>,</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>    <span class="at">y =</span> numeric <span class="sc">~</span> <span class="st">&quot;the y column&quot;</span>,</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>    <span class="at">z =</span> numeric <span class="sc">~</span> <span class="st">&quot;the z column&quot;</span>,</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>    <span class="co"># This specifies a permissive grouping with at least `carat` and `cut` columns</span></span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="sc">~</span> . <span class="sc">+</span> carat <span class="sc">+</span> cut</span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a>)</span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a></span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a><span class="cf">if</span> (rlang<span class="sc">::</span><span class="fu">is_installed</span>(<span class="st">&quot;ggplot2&quot;</span>)) {</span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a>  </span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>  <span class="co"># permissive grouping with the `~ . + carat + cut` groups rule</span></span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a>  ggplot2<span class="sc">::</span>diamonds <span class="sc">%&gt;%</span> </span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">group_by</span>(color, carat, cut) <span class="sc">%&gt;%</span> </span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a>    <span class="co"># in a usual workflow this would be an `ivalidate` call within a package </span></span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a>    <span class="co"># function but for this example we are directly calling the underlying function</span></span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a>    <span class="co"># `iconvert`</span></span>
+<span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a>    <span class="fu">iconvert</span>(i_diamonds, <span class="at">.prune =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb13-21"><a href="#cb13-21" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">glimpse</span>()</span>
+<span id="cb13-22"><a href="#cb13-22" tabindex="-1"></a></span>
+<span id="cb13-23"><a href="#cb13-23" tabindex="-1"></a>}</span>
+<span id="cb13-24"><a href="#cb13-24" tabindex="-1"></a><span class="co">#&gt; Rows: 53,940</span></span>
+<span id="cb13-25"><a href="#cb13-25" tabindex="-1"></a><span class="co">#&gt; Columns: 6</span></span>
+<span id="cb13-26"><a href="#cb13-26" tabindex="-1"></a><span class="co">#&gt; Groups: color, carat, cut [4,803]</span></span>
+<span id="cb13-27"><a href="#cb13-27" tabindex="-1"></a><span class="co">#&gt; $ color &lt;ord&gt; E, E, E, I, J, J, I, H, E, H, J, J, F, J, E, E, I, J, J, J, I, E…</span></span>
+<span id="cb13-28"><a href="#cb13-28" tabindex="-1"></a><span class="co">#&gt; $ carat &lt;dbl&gt; 0.23, 0.21, 0.23, 0.29, 0.31, 0.24, 0.24, 0.26, 0.22, 0.23, 0.30…</span></span>
+<span id="cb13-29"><a href="#cb13-29" tabindex="-1"></a><span class="co">#&gt; $ cut   &lt;ord&gt; Ideal, Premium, Good, Premium, Good, Very Good, Very Good, Very …</span></span>
+<span id="cb13-30"><a href="#cb13-30" tabindex="-1"></a><span class="co">#&gt; $ x     &lt;dbl&gt; 3.95, 3.89, 4.05, 4.20, 4.34, 3.94, 3.95, 4.07, 3.87, 4.00, 4.25…</span></span>
+<span id="cb13-31"><a href="#cb13-31" tabindex="-1"></a><span class="co">#&gt; $ y     &lt;dbl&gt; 3.98, 3.84, 4.07, 4.23, 4.35, 3.96, 3.98, 4.11, 3.78, 4.05, 4.28…</span></span>
+<span id="cb13-32"><a href="#cb13-32" tabindex="-1"></a><span class="co">#&gt; $ z     &lt;dbl&gt; 2.43, 2.31, 2.31, 2.63, 2.75, 2.48, 2.47, 2.53, 2.49, 2.39, 2.73…</span></span></code></pre></div>
+<p>If a group column is specified it must be present, regardless of the
+rest of the <code>iface</code> specification. So in this example the
+<code>cut</code> column is required by the <code>i_diamonds</code>
+contract but its data type is not specified.</p>
+<p>Rather than create a third example function we have in this example
+used <code>iconvert</code> which is an interactive for of
+<code>ivalidate</code>.</p>
+</div>
+<div id="documentation" class="section level1">
+<h1>Documentation</h1>
+<p>The <code>roxygen2</code> block of documentation for this second
+interface is determined by the <code>#&#39; @iparam</code> block, which uses
+the underlying function <code>idocument</code>. Demonstrating the
+behaviour of the <code>@iparam</code> <code>roxygen2</code> tag is hard
+in a vignette but essentially it inserts the following block into the
+documentation when <code>devtools::document</code> is called:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">idocument</span>(example_fn2))</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="co">#&gt; A dataframe containing the following columns: </span></span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a><span class="co">#&gt; * id (integer) - an integer ID</span></span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a><span class="co">#&gt; * test (logical) - the test result</span></span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a><span class="co">#&gt; * extra (character) - a new value</span></span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a><span class="co">#&gt; Ungrouped.</span></span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a><span class="co">#&gt; No default value.</span></span></code></pre></div>
+</div>
+<div id="type-coercion" class="section level1">
+<h1>Type coercion</h1>
+<p><code>interfacer</code> does not implement a rigid type system, but
+rather a permissive one. If the provided data can be coerced to the
+specified type without major loss then this is automatically done, as
+long as it can proceed with no warnings. In this example <code>id</code>
+(expected to be an integer) is provided as a <code>character</code> and
+<code>extra</code> (expected to be a character) is coerced from the
+provided numeric.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a></span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>  <span class="at">id=</span><span class="fu">c</span>(<span class="st">&quot;1&quot;</span>,<span class="st">&quot;2&quot;</span>,<span class="st">&quot;3&quot;</span>),</span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>  <span class="at">test =</span> <span class="fu">c</span>(<span class="cn">TRUE</span>,<span class="cn">FALSE</span>,<span class="cn">TRUE</span>),</span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>  <span class="at">extra =</span> <span class="fl">1.1</span></span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a>) <span class="sc">%&gt;%</span></span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a><span class="fu">example_fn2</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a>dplyr<span class="sc">::</span><span class="fu">glimpse</span>()</span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a><span class="co">#&gt; Rows: 3</span></span>
+<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a><span class="co">#&gt; Columns: 2</span></span>
+<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a><span class="co">#&gt; $ id   &lt;int&gt; 1, 2, 3</span></span>
+<span id="cb15-12"><a href="#cb15-12" tabindex="-1"></a><span class="co">#&gt; $ test &lt;lgl&gt; TRUE, FALSE, TRUE</span></span></code></pre></div>
+<p>Completely incorrect data types on the other hand are picked up and
+rejected. In this case the data supplied for <code>id</code> cannot be
+cast to integer without loss. Similar behaviour is seen if logical data
+is anything other than 0 or 1 for example.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="fu">try</span>(<span class="fu">example_fn</span>(</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>  tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>    <span class="at">id=</span> <span class="fu">c</span>(<span class="st">&quot;1.1&quot;</span>,<span class="st">&quot;2&quot;</span>,<span class="st">&quot;3&quot;</span>),</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a>    <span class="at">test =</span> <span class="fu">c</span>(<span class="cn">TRUE</span>,<span class="cn">FALSE</span>,<span class="cn">TRUE</span>)</span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>  )))</span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a><span class="co">#&gt; Error : input column `id` in function parameter `example_fn(mydata = ?)` cannot be coerced to a integer: not a true integer input</span></span></code></pre></div>
+<p>Factors might have allowable levels as well. For this we define them
+as an <code>enum</code> which accepts a list of values, which then must
+be matched by the levels of a provided factor. The order of the levels
+will be taken from the <code>iface</code> specification and re-levelling
+of inputs is taken to ensure the factor levels match the specification.
+If <code>.drop = TRUE</code> is specified then values which don’t match
+the levels will be cast to <code>NA</code> rather than causing failure
+to allow conformance to a subset of factor values.</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a></span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a><span class="cf">if</span> (rlang<span class="sc">::</span><span class="fu">is_installed</span>(<span class="st">&quot;ggplot2&quot;</span>)) {</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>  </span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>  i_diamonds <span class="ot">=</span> <span class="fu">iface</span>( </span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>    <span class="at">color =</span> <span class="fu">enum</span>(D,E,F,G,H,I,J,extra) <span class="sc">~</span> <span class="st">&quot;the colour&quot;</span>,</span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a>    <span class="at">cut =</span> <span class="fu">enum</span>(Ideal, Premium, <span class="at">.drop=</span><span class="cn">TRUE</span>) <span class="sc">~</span> <span class="st">&quot;the cut&quot;</span>,</span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a>    <span class="at">price =</span> integer <span class="sc">~</span> <span class="st">&quot;the price&quot;</span></span>
+<span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a>  )</span>
+<span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a>  </span>
+<span id="cb17-10"><a href="#cb17-10" tabindex="-1"></a>  ggplot2<span class="sc">::</span>diamonds <span class="sc">%&gt;%</span> </span>
+<span id="cb17-11"><a href="#cb17-11" tabindex="-1"></a>    <span class="fu">iconvert</span>(i_diamonds, <span class="at">.prune =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb17-12"><a href="#cb17-12" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">glimpse</span>()</span>
+<span id="cb17-13"><a href="#cb17-13" tabindex="-1"></a>   </span>
+<span id="cb17-14"><a href="#cb17-14" tabindex="-1"></a>} </span>
+<span id="cb17-15"><a href="#cb17-15" tabindex="-1"></a><span class="co">#&gt; Rows: 53,940</span></span>
+<span id="cb17-16"><a href="#cb17-16" tabindex="-1"></a><span class="co">#&gt; Columns: 3</span></span>
+<span id="cb17-17"><a href="#cb17-17" tabindex="-1"></a><span class="co">#&gt; $ color &lt;fct&gt; E, E, E, I, J, J, I, H, E, H, J, J, F, J, E, E, I, J, J, J, I, E…</span></span>
+<span id="cb17-18"><a href="#cb17-18" tabindex="-1"></a><span class="co">#&gt; $ cut   &lt;fct&gt; Ideal, Premium, NA, Premium, NA, NA, NA, NA, NA, NA, NA, Ideal, …</span></span>
+<span id="cb17-19"><a href="#cb17-19" tabindex="-1"></a><span class="co">#&gt; $ price &lt;int&gt; 326, 326, 327, 334, 335, 336, 336, 337, 337, 338, 339, 340, 342,…</span></span></code></pre></div>
+</div>
+<div id="more-complex-type-constraints" class="section level1">
+<h1>More complex type constraints</h1>
+<p>The type of a dataframe column can be defined as a basic data-type,
+however more complex constraints are also available provided in
+<code>interfacer</code>. These can be listed by searching the help
+system with <code>??interfacer::type.</code> at the console.</p>
+<table>
+<colgroup>
+<col width="19%" />
+<col width="80%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Topic</th>
+<th align="left">Title</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">anything</td>
+<td align="left">Coerce to an unspecified type</td>
+</tr>
+<tr class="even">
+<td align="left">character</td>
+<td align="left">Coerce to a character.</td>
+</tr>
+<tr class="odd">
+<td align="left">complete</td>
+<td align="left">Coerce to a complete set of values.</td>
+</tr>
+<tr class="even">
+<td align="left">date</td>
+<td align="left">Coerce to a Date.</td>
+</tr>
+<tr class="odd">
+<td align="left">default</td>
+<td align="left">Set a default value for a column</td>
+</tr>
+<tr class="even">
+<td align="left">double</td>
+<td align="left">Coerce to a double.</td>
+</tr>
+<tr class="odd">
+<td align="left">enum</td>
+<td align="left">Define a conformance rule to match a factor with
+specific levels.</td>
+</tr>
+<tr class="even">
+<td align="left">factor</td>
+<td align="left">Coerce to a factor.</td>
+</tr>
+<tr class="odd">
+<td align="left">finite</td>
+<td align="left">Check for non-finite values</td>
+</tr>
+<tr class="even">
+<td align="left">group_unique</td>
+<td align="left">Coerce to a unique value.</td>
+</tr>
+<tr class="odd">
+<td align="left">in_range</td>
+<td align="left">Define a conformance rule to confirm that a numeric is
+in a set range</td>
+</tr>
+<tr class="even">
+<td align="left">integer</td>
+<td align="left">Coerce to integer</td>
+</tr>
+<tr class="odd">
+<td align="left">logical</td>
+<td align="left">Coerce to a logical</td>
+</tr>
+<tr class="even">
+<td align="left">not_missing</td>
+<td align="left">Check for missing values</td>
+</tr>
+<tr class="odd">
+<td align="left">numeric</td>
+<td align="left">Coerce to a numeric.</td>
+</tr>
+<tr class="even">
+<td align="left">of_type</td>
+<td align="left">Check for a given class</td>
+</tr>
+<tr class="odd">
+<td align="left">positive_double</td>
+<td align="left">Coerce to a positive double.</td>
+</tr>
+<tr class="even">
+<td align="left">positive_integer</td>
+<td align="left">Coerce to a positive integer.</td>
+</tr>
+<tr class="odd">
+<td align="left">proportion</td>
+<td align="left">Coerce to a number between 0 and 1</td>
+</tr>
+</tbody>
+</table>
+<p>The individual help files for these functions explain their use but
+in an <code>iface</code> specification they are used on the left hand
+side of a formula and can be composed to allow multiple constraints. For
+example:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="fu">iface</span>(</span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a>  <span class="at">col1 =</span> double <span class="sc">+</span> finite <span class="sc">~</span> <span class="st">&quot;A finite double&quot;</span>,</span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a>  <span class="at">col2 =</span> integer <span class="sc">+</span> <span class="fu">in_range</span>(<span class="dv">0</span>,<span class="dv">100</span>) <span class="sc">~</span> <span class="st">&quot;an integer in the range 0 to 100 inclusive&quot;</span>,</span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a>  <span class="at">col3 =</span> numeric <span class="sc">+</span> <span class="fu">in_range</span>(<span class="dv">0</span>,<span class="dv">10</span>, <span class="at">include.max=</span><span class="cn">FALSE</span>) <span class="sc">~</span> <span class="st">&quot;a numeric 0 &lt;= x &lt; 10&quot;</span>, </span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a>  <span class="at">col4 =</span> date <span class="sc">~</span> <span class="st">&quot;A date&quot;</span>,</span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a>  <span class="at">col5 =</span> logical <span class="sc">+</span> not_missing <span class="sc">~</span> <span class="st">&quot;A non-NA logical&quot;</span>,</span>
+<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a>  <span class="at">col6 =</span> logical <span class="sc">+</span> <span class="fu">default</span>(<span class="cn">TRUE</span>) <span class="sc">~</span> <span class="st">&quot;A logical with missing (i.e. NA) values coerced to TRUE&quot;</span>,</span>
+<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a>  <span class="at">col7 =</span> factor <span class="sc">~</span> <span class="st">&quot;Any factor&quot;</span>,</span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a>  <span class="at">col8 =</span> <span class="fu">enum</span>(<span class="st">`</span><span class="at">A</span><span class="st">`</span>,<span class="st">`</span><span class="at">B</span><span class="st">`</span>,<span class="st">`</span><span class="at">C</span><span class="st">`</span>) <span class="sc">+</span> not_missing <span class="sc">~</span> <span class="st">&quot;A factor with exactly 3 levels A, B and C and no NA values&quot;</span></span>
+<span id="cb18-10"><a href="#cb18-10" tabindex="-1"></a>)</span></code></pre></div>
+<p>Column wise default values can be supplied with the
+<code>default(...)</code> pseudo-function and ranges with
+<code>in_range(...)</code>. Their documentation is available in
+<code>?interfacer::type.default</code> and
+<code>?interfacer::type.in_range</code>. It can be noted that although
+the internal functions are all prefixed with <code>type.XXX</code>, the
+prefix is not needed in the <code>iface</code> specification.</p>
+<p>It is also theoretically possible to supply your own checks in this
+specification. These must be in the form of a function that accepts one
+vector as input and produces one vector as output, or throws an error as
+in this example.</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a>uppercase <span class="ot">=</span> <span class="cf">function</span>(x) {</span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">any</span>(x <span class="sc">!=</span> <span class="fu">toupper</span>(x))) <span class="fu">stop</span>(<span class="st">&quot;not upper case input&quot;</span>,<span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a>  <span class="fu">return</span>(x)</span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a>}</span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a></span>
+<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a>custom_eg <span class="ot">=</span> <span class="cf">function</span>(<span class="at">df =</span> <span class="fu">iface</span>(</span>
+<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a>  <span class="at">text =</span> character <span class="sc">+</span> uppercase <span class="sc">~</span> <span class="st">&quot;An uppercase input only&quot;</span></span>
+<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a>)) {</span>
+<span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a>  df <span class="ot">=</span> <span class="fu">ivalidate</span>(df)</span>
+<span id="cb19-10"><a href="#cb19-10" tabindex="-1"></a>  <span class="fu">return</span>(df)</span>
+<span id="cb19-11"><a href="#cb19-11" tabindex="-1"></a>}</span>
+<span id="cb19-12"><a href="#cb19-12" tabindex="-1"></a></span>
+<span id="cb19-13"><a href="#cb19-13" tabindex="-1"></a>tibble<span class="sc">::</span><span class="fu">tibble</span>(<span class="at">text =</span> <span class="st">&quot;SUCCESS&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">custom_eg</span>()</span>
+<span id="cb19-14"><a href="#cb19-14" tabindex="-1"></a><span class="co">#&gt; # A tibble: 1 × 1</span></span>
+<span id="cb19-15"><a href="#cb19-15" tabindex="-1"></a><span class="co">#&gt;   text   </span></span>
+<span id="cb19-16"><a href="#cb19-16" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;  </span></span>
+<span id="cb19-17"><a href="#cb19-17" tabindex="-1"></a><span class="co">#&gt; 1 SUCCESS</span></span>
+<span id="cb19-18"><a href="#cb19-18" tabindex="-1"></a></span>
+<span id="cb19-19"><a href="#cb19-19" tabindex="-1"></a><span class="fu">try</span>(tibble<span class="sc">::</span><span class="fu">tibble</span>(<span class="at">text =</span> <span class="st">&quot;fail&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">custom_eg</span>())</span>
+<span id="cb19-20"><a href="#cb19-20" tabindex="-1"></a><span class="co">#&gt; Error : input column `text` in function parameter `custom_eg(df = ?)` cannot be coerced to a character + uppercase: not upper case input</span></span></code></pre></div>
+<p>N.B. When using custom conditions within a package they must be
+visible to <code>interfacer</code> this normally means they will need to
+be exported and may need to be referred to with package prefix.</p>
+<p>A final option is to use an <code>as.XXX</code> function as a
+condition. In this example we define a column as a <code>POSIXct</code>
+type, and a second column is defined as a <code>ts</code> class
+vector:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a></span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a><span class="co"># Coerce the `date_col` to a POSIXct and </span></span>
+<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a>custom_eg_2 <span class="ot">=</span> <span class="cf">function</span>( <span class="at">df =</span> <span class="fu">iface</span>(</span>
+<span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a>    <span class="at">date_col =</span> POSIXct <span class="sc">~</span> <span class="st">&quot;a posix date&quot;</span>,</span>
+<span id="cb20-5"><a href="#cb20-5" tabindex="-1"></a>    <span class="at">ts_col =</span> <span class="fu">of_type</span>(ts) <span class="sc">~</span> <span class="st">&quot;A timeseries vector&quot;</span></span>
+<span id="cb20-6"><a href="#cb20-6" tabindex="-1"></a>  )) {</span>
+<span id="cb20-7"><a href="#cb20-7" tabindex="-1"></a>  df <span class="ot">=</span> <span class="fu">ivalidate</span>(df)</span>
+<span id="cb20-8"><a href="#cb20-8" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">lapply</span>(df, class))</span>
+<span id="cb20-9"><a href="#cb20-9" tabindex="-1"></a>}</span>
+<span id="cb20-10"><a href="#cb20-10" tabindex="-1"></a></span>
+<span id="cb20-11"><a href="#cb20-11" tabindex="-1"></a>tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
+<span id="cb20-12"><a href="#cb20-12" tabindex="-1"></a>  <span class="at">date_col =</span> <span class="fu">c</span>(<span class="st">&quot;2001-01-01&quot;</span>,<span class="st">&quot;2002-01-01&quot;</span>),</span>
+<span id="cb20-13"><a href="#cb20-13" tabindex="-1"></a>  <span class="at">ts_col =</span> <span class="fu">ts</span>(<span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">1</span>))</span>
+<span id="cb20-14"><a href="#cb20-14" tabindex="-1"></a>) <span class="sc">%&gt;%</span> <span class="fu">custom_eg_2</span>()</span>
+<span id="cb20-15"><a href="#cb20-15" tabindex="-1"></a><span class="co">#&gt; $date_col</span></span>
+<span id="cb20-16"><a href="#cb20-16" tabindex="-1"></a><span class="co">#&gt; [1] &quot;POSIXct&quot; &quot;POSIXt&quot; </span></span>
+<span id="cb20-17"><a href="#cb20-17" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb20-18"><a href="#cb20-18" tabindex="-1"></a><span class="co">#&gt; $ts_col</span></span>
+<span id="cb20-19"><a href="#cb20-19" tabindex="-1"></a><span class="co">#&gt; [1] &quot;ts&quot;</span></span></code></pre></div>
+</div>
+<div id="default-dataframe-values" class="section level1">
+<h1>Default dataframe values</h1>
+<p>Because <code>interfacer</code> hijacks the R default value for a
+function parameter to define the input dataframe constraints, there
+needs to be an alternative way to supply a default value if one is
+needed. To do this the <code>iface</code> specification can define a
+default. This can either be a) A zero length dataframe, or b) a
+dataframe supplied at the time of interface definition, or c) a data
+frame supplied at the time of function execution.</p>
+<p>To get a zero length dataframe as the default the value of
+<code>TRUE</code> is passed to the <code>.default</code> value of
+<code>iface</code>:</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a></span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a>i_iris <span class="ot">=</span> interfacer<span class="sc">::</span><span class="fu">iface</span>(</span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a>    <span class="at">Sepal.Length =</span> numeric <span class="sc">~</span> <span class="st">&quot;the Sepal.Length column&quot;</span>,</span>
+<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a>    <span class="at">Sepal.Width =</span> numeric <span class="sc">~</span> <span class="st">&quot;the Sepal.Width column&quot;</span>,</span>
+<span id="cb21-5"><a href="#cb21-5" tabindex="-1"></a>    <span class="at">Petal.Length =</span> numeric <span class="sc">~</span> <span class="st">&quot;the Petal.Length column&quot;</span>,</span>
+<span id="cb21-6"><a href="#cb21-6" tabindex="-1"></a>    <span class="at">Petal.Width =</span> numeric <span class="sc">~</span> <span class="st">&quot;the Petal.Width column&quot;</span>,</span>
+<span id="cb21-7"><a href="#cb21-7" tabindex="-1"></a>    <span class="at">Species =</span> <span class="fu">enum</span>(<span class="st">`</span><span class="at">setosa</span><span class="st">`</span>,<span class="st">`</span><span class="at">versicolor</span><span class="st">`</span>,<span class="st">`</span><span class="at">virginica</span><span class="st">`</span>) <span class="sc">~</span> <span class="st">&quot;the Species column&quot;</span>,</span>
+<span id="cb21-8"><a href="#cb21-8" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="cn">NULL</span>,</span>
+<span id="cb21-9"><a href="#cb21-9" tabindex="-1"></a>  <span class="at">.default =</span> <span class="cn">TRUE</span></span>
+<span id="cb21-10"><a href="#cb21-10" tabindex="-1"></a>)</span>
+<span id="cb21-11"><a href="#cb21-11" tabindex="-1"></a></span>
+<span id="cb21-12"><a href="#cb21-12" tabindex="-1"></a>test_fn <span class="ot">=</span> <span class="cf">function</span>(<span class="at">i =</span> i_iris, ...) {</span>
+<span id="cb21-13"><a href="#cb21-13" tabindex="-1"></a>  <span class="co"># if i is not provided (a missing value) the default zero length </span></span>
+<span id="cb21-14"><a href="#cb21-14" tabindex="-1"></a>  <span class="co"># dataframe defined by `i_iris` is used.</span></span>
+<span id="cb21-15"><a href="#cb21-15" tabindex="-1"></a>  i <span class="ot">=</span> <span class="fu">ivalidate</span>(i)</span>
+<span id="cb21-16"><a href="#cb21-16" tabindex="-1"></a>  <span class="fu">return</span>(i)</span>
+<span id="cb21-17"><a href="#cb21-17" tabindex="-1"></a>}</span>
+<span id="cb21-18"><a href="#cb21-18" tabindex="-1"></a></span>
+<span id="cb21-19"><a href="#cb21-19" tabindex="-1"></a><span class="co"># Outputs a zero length data frame as the default value</span></span>
+<span id="cb21-20"><a href="#cb21-20" tabindex="-1"></a><span class="fu">test_fn</span>() <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">glimpse</span>()</span>
+<span id="cb21-21"><a href="#cb21-21" tabindex="-1"></a><span class="co">#&gt; Rows: 0</span></span>
+<span id="cb21-22"><a href="#cb21-22" tabindex="-1"></a><span class="co">#&gt; Columns: 5</span></span>
+<span id="cb21-23"><a href="#cb21-23" tabindex="-1"></a><span class="co">#&gt; $ Sepal.Length &lt;dbl&gt; </span></span>
+<span id="cb21-24"><a href="#cb21-24" tabindex="-1"></a><span class="co">#&gt; $ Sepal.Width  &lt;dbl&gt; </span></span>
+<span id="cb21-25"><a href="#cb21-25" tabindex="-1"></a><span class="co">#&gt; $ Petal.Length &lt;dbl&gt; </span></span>
+<span id="cb21-26"><a href="#cb21-26" tabindex="-1"></a><span class="co">#&gt; $ Petal.Width  &lt;dbl&gt; </span></span>
+<span id="cb21-27"><a href="#cb21-27" tabindex="-1"></a><span class="co">#&gt; $ Species      &lt;fct&gt;</span></span></code></pre></div>
+<p>In this second example the default value is specified during the
+interface specification.</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a></span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a>i_iris_2 <span class="ot">=</span> interfacer<span class="sc">::</span><span class="fu">iface</span>(</span>
+<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a>    <span class="at">Sepal.Length =</span> numeric <span class="sc">~</span> <span class="st">&quot;the Sepal.Length column&quot;</span>,</span>
+<span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a>    <span class="at">Sepal.Width =</span> numeric <span class="sc">~</span> <span class="st">&quot;the Sepal.Width column&quot;</span>,</span>
+<span id="cb22-5"><a href="#cb22-5" tabindex="-1"></a>    <span class="at">Petal.Length =</span> numeric <span class="sc">~</span> <span class="st">&quot;the Petal.Length column&quot;</span>,</span>
+<span id="cb22-6"><a href="#cb22-6" tabindex="-1"></a>    <span class="at">Petal.Width =</span> numeric <span class="sc">~</span> <span class="st">&quot;the Petal.Width column&quot;</span>,</span>
+<span id="cb22-7"><a href="#cb22-7" tabindex="-1"></a>    <span class="at">Species =</span> <span class="fu">enum</span>(<span class="st">`</span><span class="at">setosa</span><span class="st">`</span>,<span class="st">`</span><span class="at">versicolor</span><span class="st">`</span>,<span class="st">`</span><span class="at">virginica</span><span class="st">`</span>) <span class="sc">~</span> <span class="st">&quot;the Species column&quot;</span>,</span>
+<span id="cb22-8"><a href="#cb22-8" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="cn">NULL</span>,</span>
+<span id="cb22-9"><a href="#cb22-9" tabindex="-1"></a>  <span class="at">.default =</span> iris</span>
+<span id="cb22-10"><a href="#cb22-10" tabindex="-1"></a>)</span>
+<span id="cb22-11"><a href="#cb22-11" tabindex="-1"></a></span>
+<span id="cb22-12"><a href="#cb22-12" tabindex="-1"></a>test_fn_2 <span class="ot">=</span> <span class="cf">function</span>(<span class="at">i =</span> i_iris_2, ...) {</span>
+<span id="cb22-13"><a href="#cb22-13" tabindex="-1"></a>  i <span class="ot">=</span> <span class="fu">ivalidate</span>(i)</span>
+<span id="cb22-14"><a href="#cb22-14" tabindex="-1"></a>  <span class="fu">return</span>(i)</span>
+<span id="cb22-15"><a href="#cb22-15" tabindex="-1"></a>}</span>
+<span id="cb22-16"><a href="#cb22-16" tabindex="-1"></a></span>
+<span id="cb22-17"><a href="#cb22-17" tabindex="-1"></a><span class="co"># Outputs the 150 row iris data frame as a default value from the definition of `i_iris_2`</span></span>
+<span id="cb22-18"><a href="#cb22-18" tabindex="-1"></a><span class="fu">test_fn_2</span>() <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">glimpse</span>()</span>
+<span id="cb22-19"><a href="#cb22-19" tabindex="-1"></a><span class="co">#&gt; Rows: 150</span></span>
+<span id="cb22-20"><a href="#cb22-20" tabindex="-1"></a><span class="co">#&gt; Columns: 5</span></span>
+<span id="cb22-21"><a href="#cb22-21" tabindex="-1"></a><span class="co">#&gt; $ Sepal.Length &lt;dbl&gt; 5.1, 4.9, 4.7, 4.6, 5.0, 5.4, 4.6, 5.0, 4.4, 4.9, 5.4, 4.…</span></span>
+<span id="cb22-22"><a href="#cb22-22" tabindex="-1"></a><span class="co">#&gt; $ Sepal.Width  &lt;dbl&gt; 3.5, 3.0, 3.2, 3.1, 3.6, 3.9, 3.4, 3.4, 2.9, 3.1, 3.7, 3.…</span></span>
+<span id="cb22-23"><a href="#cb22-23" tabindex="-1"></a><span class="co">#&gt; $ Petal.Length &lt;dbl&gt; 1.4, 1.4, 1.3, 1.5, 1.4, 1.7, 1.4, 1.5, 1.4, 1.5, 1.5, 1.…</span></span>
+<span id="cb22-24"><a href="#cb22-24" tabindex="-1"></a><span class="co">#&gt; $ Petal.Width  &lt;dbl&gt; 0.2, 0.2, 0.2, 0.2, 0.2, 0.4, 0.3, 0.2, 0.2, 0.1, 0.2, 0.…</span></span>
+<span id="cb22-25"><a href="#cb22-25" tabindex="-1"></a><span class="co">#&gt; $ Species      &lt;fct&gt; setosa, setosa, setosa, setosa, setosa, setosa, setosa, s…</span></span></code></pre></div>
+<p>In this third example we override the default on a per function basis
+by supplying a default to <code>ivalidate</code> within the function
+body. In this case the default is just the first 5 rows:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a></span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a>test_fn_3 <span class="ot">=</span> <span class="cf">function</span>(<span class="at">i =</span> i_iris_2, ...) {</span>
+<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a>  i <span class="ot">=</span> <span class="fu">ivalidate</span>(i, <span class="at">.default =</span> iris <span class="sc">%&gt;%</span> <span class="fu">head</span>(<span class="dv">5</span>))</span>
+<span id="cb23-4"><a href="#cb23-4" tabindex="-1"></a>  <span class="fu">return</span>(i)</span>
+<span id="cb23-5"><a href="#cb23-5" tabindex="-1"></a>}</span>
+<span id="cb23-6"><a href="#cb23-6" tabindex="-1"></a></span>
+<span id="cb23-7"><a href="#cb23-7" tabindex="-1"></a><span class="co"># Outputs the first 5 rows of the iris data frame as the default value</span></span>
+<span id="cb23-8"><a href="#cb23-8" tabindex="-1"></a><span class="fu">test_fn_3</span>() <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">glimpse</span>()</span>
+<span id="cb23-9"><a href="#cb23-9" tabindex="-1"></a><span class="co">#&gt; Rows: 5</span></span>
+<span id="cb23-10"><a href="#cb23-10" tabindex="-1"></a><span class="co">#&gt; Columns: 5</span></span>
+<span id="cb23-11"><a href="#cb23-11" tabindex="-1"></a><span class="co">#&gt; $ Sepal.Length &lt;dbl&gt; 5.1, 4.9, 4.7, 4.6, 5.0</span></span>
+<span id="cb23-12"><a href="#cb23-12" tabindex="-1"></a><span class="co">#&gt; $ Sepal.Width  &lt;dbl&gt; 3.5, 3.0, 3.2, 3.1, 3.6</span></span>
+<span id="cb23-13"><a href="#cb23-13" tabindex="-1"></a><span class="co">#&gt; $ Petal.Length &lt;dbl&gt; 1.4, 1.4, 1.3, 1.5, 1.4</span></span>
+<span id="cb23-14"><a href="#cb23-14" tabindex="-1"></a><span class="co">#&gt; $ Petal.Width  &lt;dbl&gt; 0.2, 0.2, 0.2, 0.2, 0.2</span></span>
+<span id="cb23-15"><a href="#cb23-15" tabindex="-1"></a><span class="co">#&gt; $ Species      &lt;fct&gt; setosa, setosa, setosa, setosa, setosa</span></span></code></pre></div>
+</div>
+<div id="conclusion" class="section level1">
+<h1>Conclusion</h1>
+<p>This vignette covers the primary validation functions of
+<code>interfacer</code>, including missing columns, data-type checks and
+enforcing grouping structure. Automation of documentation and interface
+composition is also covered.</p>
+<p>Please see the other vignettes for topics such as function dispatch
+based on <code>iface</code> specifications, automatically handling
+grouped input, nesting and <code>purrr</code> style list columns, and a
+quick summary of tools to help developers.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

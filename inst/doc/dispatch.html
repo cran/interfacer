@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Multiple dispatch based on dataframes</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Multiple dispatch based on dataframes</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(interfacer)</span></code></pre></div>
+<div id="rationale" class="section level1">
+<h1>Rationale</h1>
+<p>The S3 type system allows for dispatch based on the first argument of
+a function. In the situation where we are developing functions that use
+dataframes as input selecting a dispatch function needs to be based on
+the structure of the input rather than its class.
+<code>interfacer</code> can use <code>iface</code> specifications to
+associate</p>
+</div>
+<div id="dispatch" class="section level1">
+<h1>Dispatch</h1>
+<p>Dispatching to one of a number of functions based on the nature of a
+dataframe input is enabled by <code>idispatch(...)</code>. This emulates
+the behaviour of <code>S3</code> classes but for dataframes, based on
+their columns and also their grouping. Consider the following
+<code>iface</code> specifications:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>i_test <span class="ot">=</span> <span class="fu">iface</span>(</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>  <span class="at">id =</span> integer <span class="sc">~</span> <span class="st">&quot;an integer ID&quot;</span>,</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  <span class="at">test =</span> logical <span class="sc">~</span> <span class="st">&quot;the test result&quot;</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>)</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co"># Extends the i_test to include an additional column</span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>i_test_extn <span class="ot">=</span> <span class="fu">iface</span>(</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>  i_test,</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>  <span class="at">extra =</span> character <span class="sc">~</span> <span class="st">&quot;a new value&quot;</span>,</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>  <span class="at">.groups =</span> <span class="cn">FALSE</span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>)</span></code></pre></div>
+<p>We can create specific handlers for each type of data and decide
+which function to dispatch to at runtime based on the input
+dataframe.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co"># The generic function</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>disp_example <span class="ot">=</span> <span class="cf">function</span>(x, ...) {</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="fu">idispatch</span>(x,</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>    <span class="at">disp_example.extn =</span> i_test_extn,</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>    <span class="at">disp_example.no_extn =</span> i_test</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>  )</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>}</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co"># The handler for extended input dataframe types</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>disp_example.extn <span class="ot">=</span> <span class="cf">function</span>(<span class="at">x =</span> i_test_extn, ...) {</span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">&quot;extended data function&quot;</span>)</span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">colnames</span>(x))</span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>}</span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a></span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a><span class="co"># The handler for non-extended input dataframe types</span></span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a>disp_example.no_extn <span class="ot">=</span> <span class="cf">function</span>(<span class="at">x =</span> i_test, ...) {</span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">&quot;not extended data function&quot;</span>)</span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">colnames</span>(x))</span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a>}</span></code></pre></div>
+<p>If we call <code>disp_example()</code> with data that matches the
+<code>i_test_extn</code> specification we get one type of behaviour:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>tmp <span class="ot">=</span> tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>    <span class="at">id=</span><span class="fu">c</span>(<span class="st">&quot;1&quot;</span>,<span class="st">&quot;2&quot;</span>,<span class="st">&quot;3&quot;</span>),</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>    <span class="at">test =</span> <span class="fu">c</span>(<span class="cn">TRUE</span>,<span class="cn">FALSE</span>,<span class="cn">TRUE</span>),</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>    <span class="at">extra =</span> <span class="fl">1.1</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>)</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>tmp <span class="sc">%&gt;%</span> <span class="fu">disp_example</span>()</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt; extended data function</span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt; [1] &quot;id&quot;    &quot;test&quot;  &quot;extra&quot;</span></span></code></pre></div>
+<p>But if we call <code>disp_example()</code> with data that only
+matches the <code>i_test</code> specification we get different
+behaviour:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># this matches the i_test_extn specification:</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>tmp2 <span class="ot">=</span> tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>    <span class="at">id=</span><span class="fu">c</span>(<span class="st">&quot;1&quot;</span>,<span class="st">&quot;2&quot;</span>,<span class="st">&quot;3&quot;</span>),</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>    <span class="at">test =</span> <span class="fu">c</span>(<span class="cn">TRUE</span>,<span class="cn">FALSE</span>,<span class="cn">TRUE</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>)</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>tmp2 <span class="sc">%&gt;%</span> <span class="fu">disp_example</span>()</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt; not extended data function</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt; [1] &quot;id&quot;   &quot;test&quot;</span></span></code></pre></div>
+<p>I’ve used this mechanism, for example, to configure how plots are
+produced depending on the input.</p>
+<div id="recursive-dispatch" class="section level2">
+<h2>Recursive dispatch</h2>
+<p>The order of the rules is important. In general the more detailed
+specifications needing to be provided first, and the more generic
+specifications last. We can leverage this to create a recursive
+functional pattern of dataframe processing that allows multiple inputs
+to converge on a single output, this also demonstrates the use of
+<code>itest()</code> which simply checks an input conforms to an
+<code>iface</code> specification:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="co"># generic type 1 input</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>i_input_1 <span class="ot">=</span> <span class="fu">iface</span>(</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="at">x =</span> integer <span class="sc">~</span> <span class="st">&quot;the positives&quot;</span>,</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  <span class="at">n =</span> <span class="fu">default</span>(<span class="dv">100</span>) <span class="sc">+</span> integer <span class="sc">~</span> <span class="st">&quot;the total&quot;</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>)</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co"># generic type 2 input</span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>i_input_2 <span class="ot">=</span> <span class="fu">iface</span>(</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>  <span class="at">p =</span> proportion <span class="sc">~</span> <span class="st">&quot;the proportion&quot;</span>,</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>  <span class="at">n =</span> <span class="fu">default</span>(<span class="dv">100</span>) <span class="sc">+</span> integer <span class="sc">~</span> <span class="st">&quot;the total&quot;</span></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>)</span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a></span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a><span class="co"># more detailed combined type 1 and 2 input</span></span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a>i_interim <span class="ot">=</span> <span class="fu">iface</span>(</span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a>  i_input_1,</span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a>  i_input_2</span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a>)</span>
+<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a></span>
+<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a><span class="co"># most detailed input format</span></span>
+<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a>i_final <span class="ot">=</span> <span class="fu">iface</span>(</span>
+<span id="cb6-22"><a href="#cb6-22" tabindex="-1"></a>  i_interim,</span>
+<span id="cb6-23"><a href="#cb6-23" tabindex="-1"></a>  <span class="at">lower =</span> double <span class="sc">~</span> <span class="st">&quot;wilson lower CI&quot;</span>,</span>
+<span id="cb6-24"><a href="#cb6-24" tabindex="-1"></a>  <span class="at">upper =</span> double <span class="sc">~</span> <span class="st">&quot;wilson lower CI&quot;</span>,</span>
+<span id="cb6-25"><a href="#cb6-25" tabindex="-1"></a>  <span class="at">mean =</span> double <span class="sc">~</span> <span class="st">&quot;wilson mean&quot;</span></span>
+<span id="cb6-26"><a href="#cb6-26" tabindex="-1"></a>)</span>
+<span id="cb6-27"><a href="#cb6-27" tabindex="-1"></a></span>
+<span id="cb6-28"><a href="#cb6-28" tabindex="-1"></a><span class="co"># final target output format</span></span>
+<span id="cb6-29"><a href="#cb6-29" tabindex="-1"></a>i_target <span class="ot">=</span> <span class="fu">iface</span>(</span>
+<span id="cb6-30"><a href="#cb6-30" tabindex="-1"></a>  i_final,</span>
+<span id="cb6-31"><a href="#cb6-31" tabindex="-1"></a>  <span class="at">label =</span> character <span class="sc">~</span> <span class="st">&quot;a printable label&quot;</span></span>
+<span id="cb6-32"><a href="#cb6-32" tabindex="-1"></a>)</span>
+<span id="cb6-33"><a href="#cb6-33" tabindex="-1"></a></span>
+<span id="cb6-34"><a href="#cb6-34" tabindex="-1"></a><span class="co"># processes input of type 1 and </span></span>
+<span id="cb6-35"><a href="#cb6-35" tabindex="-1"></a>process.input_1 <span class="ot">=</span> <span class="cf">function</span>(<span class="at">x =</span> i_input_1,...) {</span>
+<span id="cb6-36"><a href="#cb6-36" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">&quot;process input 1&quot;</span>)</span>
+<span id="cb6-37"><a href="#cb6-37" tabindex="-1"></a>  <span class="fu">ireturn</span>(x <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">p =</span> x<span class="sc">/</span>n), <span class="at">iface =</span> i_interim)</span>
+<span id="cb6-38"><a href="#cb6-38" tabindex="-1"></a>}</span>
+<span id="cb6-39"><a href="#cb6-39" tabindex="-1"></a></span>
+<span id="cb6-40"><a href="#cb6-40" tabindex="-1"></a>process.input_2 <span class="ot">=</span> <span class="cf">function</span>(<span class="at">x =</span> i_input_2,...) {</span>
+<span id="cb6-41"><a href="#cb6-41" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">&quot;process input 2&quot;</span>)</span>
+<span id="cb6-42"><a href="#cb6-42" tabindex="-1"></a>  <span class="fu">ireturn</span>(x <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">x =</span> <span class="fu">floor</span>(p<span class="sc">*</span>n)), <span class="at">iface =</span> i_interim)</span>
+<span id="cb6-43"><a href="#cb6-43" tabindex="-1"></a>}</span>
+<span id="cb6-44"><a href="#cb6-44" tabindex="-1"></a></span>
+<span id="cb6-45"><a href="#cb6-45" tabindex="-1"></a>process.interim <span class="ot">=</span> <span class="cf">function</span>(x) {</span>
+<span id="cb6-46"><a href="#cb6-46" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">&quot;process interim&quot;</span>)</span>
+<span id="cb6-47"><a href="#cb6-47" tabindex="-1"></a>  <span class="fu">ireturn</span>(x <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">mutate</span>(binom<span class="sc">::</span><span class="fu">binom.wilson</span>(x,n)), <span class="at">iface =</span> i_final)</span>
+<span id="cb6-48"><a href="#cb6-48" tabindex="-1"></a>}</span>
+<span id="cb6-49"><a href="#cb6-49" tabindex="-1"></a></span>
+<span id="cb6-50"><a href="#cb6-50" tabindex="-1"></a>process.final <span class="ot">=</span> <span class="cf">function</span>(x) {</span>
+<span id="cb6-51"><a href="#cb6-51" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">&quot;process final&quot;</span>)</span>
+<span id="cb6-52"><a href="#cb6-52" tabindex="-1"></a>  <span class="fu">ireturn</span>(x <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">label =</span> <span class="fu">sprintf</span>(<span class="st">&quot;%1.1f%% [%1.1f%% - %1.1f%%] (%d/%d)&quot;</span>, </span>
+<span id="cb6-53"><a href="#cb6-53" tabindex="-1"></a>    mean<span class="sc">*</span><span class="dv">100</span>, lower<span class="sc">*</span><span class="dv">100</span>, upper<span class="sc">*</span><span class="dv">100</span>, x, n)), <span class="at">iface =</span> i_target)</span>
+<span id="cb6-54"><a href="#cb6-54" tabindex="-1"></a>}</span>
+<span id="cb6-55"><a href="#cb6-55" tabindex="-1"></a></span>
+<span id="cb6-56"><a href="#cb6-56" tabindex="-1"></a>process <span class="ot">=</span> <span class="cf">function</span>(x,...) {</span>
+<span id="cb6-57"><a href="#cb6-57" tabindex="-1"></a>  <span class="co"># this test must be at the front to prevent infinite recursion</span></span>
+<span id="cb6-58"><a href="#cb6-58" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">itest</span>(x, i_target)) <span class="fu">return</span>(x)</span>
+<span id="cb6-59"><a href="#cb6-59" tabindex="-1"></a>  out <span class="ot">=</span> <span class="fu">idispatch</span>(x,</span>
+<span id="cb6-60"><a href="#cb6-60" tabindex="-1"></a>    <span class="at">process.final =</span> i_final,</span>
+<span id="cb6-61"><a href="#cb6-61" tabindex="-1"></a>    <span class="at">process.interim =</span> i_interim,</span>
+<span id="cb6-62"><a href="#cb6-62" tabindex="-1"></a>    <span class="at">process.input_2 =</span> i_input_2,</span>
+<span id="cb6-63"><a href="#cb6-63" tabindex="-1"></a>    <span class="at">process.input_1 =</span> i_input_1</span>
+<span id="cb6-64"><a href="#cb6-64" tabindex="-1"></a>  )</span>
+<span id="cb6-65"><a href="#cb6-65" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">process</span>(out))</span>
+<span id="cb6-66"><a href="#cb6-66" tabindex="-1"></a>}</span></code></pre></div>
+<p>Processing an input of <code>type 1</code> results in one path
+through the data pipeline:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># tibble::tibble(x=c(10,30), n=c(NA,50)) %&gt;% itest(i_input_1)</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="fu">process</span>(tibble<span class="sc">::</span><span class="fu">tibble</span>(<span class="at">x=</span><span class="fu">c</span>(<span class="dv">10</span>,<span class="dv">30</span>), <span class="at">n=</span><span class="fu">c</span>(<span class="cn">NA</span>,<span class="dv">50</span>))) <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">glimpse</span>()</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="co">#&gt; process input 1</span></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="co">#&gt; process interim</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="co">#&gt; process final</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="co">#&gt; Rows: 2</span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="co">#&gt; Columns: 8</span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co">#&gt; $ x      &lt;int&gt; 10, 30</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="co">#&gt; $ n      &lt;int&gt; 100, 50</span></span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="co">#&gt; $ p      &lt;dbl&gt; 0.1, 0.6</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a><span class="co">#&gt; $ method &lt;chr&gt; &quot;wilson&quot;, &quot;wilson&quot;</span></span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a><span class="co">#&gt; $ mean   &lt;dbl&gt; 0.1, 0.6</span></span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a><span class="co">#&gt; $ lower  &lt;dbl&gt; 0.05522914, 0.46181438</span></span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a><span class="co">#&gt; $ upper  &lt;dbl&gt; 0.1743657, 0.7239161</span></span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a><span class="co">#&gt; $ label  &lt;chr&gt; &quot;10.0% [5.5% - 17.4%] (10/100)&quot;, &quot;60.0% [46.2% - 72.4%] (30/50)&quot;</span></span></code></pre></div>
+<p>Processing an input of <code>type 2</code>, results in a different
+path through the data pipeline, but the same outcome:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># tibble::tibble(p=0.15,n=1000) %&gt;% itest(i_input_2)</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="fu">process</span>(tibble<span class="sc">::</span><span class="fu">tibble</span>(<span class="at">p=</span><span class="fl">0.15</span>,<span class="at">n=</span><span class="dv">1000</span>)) <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">glimpse</span>()</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="co">#&gt; process input 2</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co">#&gt; process interim</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="co">#&gt; process final</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="co">#&gt; Rows: 1</span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co">#&gt; Columns: 8</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="co">#&gt; $ p      &lt;dbl&gt; 0.15</span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co">#&gt; $ n      &lt;int&gt; 1000</span></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co">#&gt; $ x      &lt;int&gt; 150</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="co">#&gt; $ method &lt;chr&gt; &quot;wilson&quot;</span></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="co">#&gt; $ mean   &lt;dbl&gt; 0.15</span></span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="co">#&gt; $ lower  &lt;dbl&gt; 0.1292101</span></span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="co">#&gt; $ upper  &lt;dbl&gt; 0.1734687</span></span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a><span class="co">#&gt; $ label  &lt;chr&gt; &quot;15.0% [12.9% - 17.3%] (150/1000)&quot;</span></span></code></pre></div>
+<p>Care must be taken though in this pattern, particularly if you are
+re-using column names,as data-type coercion could result in some column
+types being switched backwards and forwards, and other infinite loop
+problems.</p>
+</div>
+<div id="grouping-based-dispatch" class="section level2">
+<h2>Grouping based dispatch</h2>
+<p>It is often useful to have a function that can expects a specific
+grouping but can handle additional groups. One way of handling these is
+to use <code>purrr</code> and nest columns extensively. Nesting data in
+the unexpected groups and repeatedly applying the function you want. An
+alternative <code>dplyr</code> solution is to use a
+<code>group_modify</code>. <code>interfacer</code> leverages this second
+option to automatically determine a grouping necessary for a pipeline
+function from the stated grouping requirements and automatically handle
+them without additional coding in the package.</p>
+<p>For example if we have the following <code>iface</code> the input for
+a function must be grouped only by the <code>color</code> column:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>i_diamond_price <span class="ot">=</span> interfacer<span class="sc">::</span><span class="fu">iface</span>(</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  <span class="at">color =</span> <span class="fu">enum</span>(<span class="st">`</span><span class="at">D</span><span class="st">`</span>,<span class="st">`</span><span class="at">E</span><span class="st">`</span>,<span class="st">`</span><span class="at">F</span><span class="st">`</span>,<span class="st">`</span><span class="at">G</span><span class="st">`</span>,<span class="st">`</span><span class="at">H</span><span class="st">`</span>,<span class="st">`</span><span class="at">I</span><span class="st">`</span>,<span class="st">`</span><span class="at">J</span><span class="st">`</span>, <span class="at">.ordered=</span><span class="cn">TRUE</span>) <span class="sc">~</span> <span class="st">&quot;the color column&quot;</span>,</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="at">price =</span> integer <span class="sc">~</span> <span class="st">&quot;the price column&quot;</span>,</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="at">.groups =</span> <span class="sc">~</span> color</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>)</span></code></pre></div>
+<p>A package developer writing a pipeline function may use this fact to
+handle possible additional grouping by using a
+<code>igroup_process(df, ...)</code></p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a> <span class="co"># exported function in package</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a> <span class="co"># at param can use `r idocument(ex_mean, df)` for documentation</span></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a> ex_mean <span class="ot">=</span> <span class="cf">function</span>(<span class="at">df =</span> i_diamond_price, <span class="at">extra_param =</span> <span class="st">&quot;.&quot;</span>) {</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>   <span class="co"># dispatch based on groupings:</span></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>   <span class="fu">igroup_process</span>(df,</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>     <span class="co"># the real work of this function is provided as an anonymous inner</span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>     <span class="co"># function (but can be any other function e.g. package private function)</span></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>     <span class="co"># or a purrr style lambda.</span></span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a></span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>     <span class="cf">function</span>(df, extra_param) {</span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a>       <span class="fu">message</span>(extra_param, <span class="at">appendLF =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a>       <span class="fu">return</span>(df <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">summarise</span>(<span class="at">mean_price =</span> <span class="fu">mean</span>(price)))</span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a>     }</span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a></span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a>   )</span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a> }</span></code></pre></div>
+<p>If we pass this to correctly grouped data conforming to
+<code>i_diamond_price</code> the inner function is executed once
+transparently, after the input has been validated:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="co"># The correctly grouped dataframe</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>ggplot2<span class="sc">::</span>diamonds <span class="sc">%&gt;%</span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">group_by</span>(color) <span class="sc">%&gt;%</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  <span class="fu">ex_mean</span>(<span class="at">extra_param =</span> <span class="st">&quot;without additional groups...&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">glimpse</span>()</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="co">#&gt; without additional groups...</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co">#&gt; Rows: 7</span></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="co">#&gt; Columns: 2</span></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="co">#&gt; $ color      &lt;ord&gt; D, E, F, G, H, I, J</span></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a><span class="co">#&gt; $ mean_price &lt;dbl&gt; 3169.954, 3076.752, 3724.886, 3999.136, 4486.669, 5091.875,…</span></span></code></pre></div>
+<p>If on the other hand additional groups are present the inner function
+is executed once for each of the additional groups. Data validation
+happens once per group, which affects interpretation of uniqueness.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="co"># The incorrectly grouped dataframe</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>ggplot2<span class="sc">::</span>diamonds <span class="sc">%&gt;%</span></span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">group_by</span>(cut, color) <span class="sc">%&gt;%</span></span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>  <span class="fu">ex_mean</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">glimpse</span>()</span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a><span class="co">#&gt; .....</span></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="co">#&gt; Rows: 35</span></span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="co">#&gt; Columns: 3</span></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="co">#&gt; Groups: cut [5]</span></span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="co">#&gt; $ cut        &lt;ord&gt; Fair, Fair, Fair, Fair, Fair, Fair, Fair, Good, Good, Good,…</span></span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a><span class="co">#&gt; $ color      &lt;ord&gt; D, E, F, G, H, I, J, D, E, F, G, H, I, J, D, E, F, G, H, I,…</span></span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a><span class="co">#&gt; $ mean_price &lt;dbl&gt; 4291.061, 3682.312, 3827.003, 4239.255, 5135.683, 4685.446,…</span></span></code></pre></div>
+<p>The output of this is actually grouped by <code>cut</code> as the
+<code>color</code> column grouping is consumed by the nested function in
+<code>igroup_process</code>.</p>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
