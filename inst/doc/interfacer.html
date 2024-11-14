@@ -377,8 +377,7 @@ documentation about the column.</p>
 <span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co">#&gt; A dataframe containing the following columns: </span></span>
 <span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co">#&gt; * id (integer) - an integer ID</span></span>
 <span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co">#&gt; * test (logical) - the test result</span></span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co">#&gt; No mandatory groupings.</span></span>
-<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt; No default value.</span></span></code></pre></div>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co">#&gt; Any grouping allowed.</span></span></code></pre></div>
 <p>An <code>iface</code> specification is associated with a specific
 function parameter by being set as the default value for that parameter.
 This is a dummy default value but when combined with
@@ -458,7 +457,7 @@ specification as the id column cannot be coerced to an integer.</p>
 <span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>  bad_example_data_2, </span>
 <span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>  <span class="st">&quot;value for another&quot;</span></span>
 <span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>))</span>
-<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="co">#&gt; Error : input column `id` in function parameter `example_fn(mydata = ?)` cannot be coerced to a integer: not a true integer input</span></span></code></pre></div>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="co">#&gt; Error : input column `id` in function parameter `example_fn(mydata = ?)` cannot be coerced to a integer: rounding detected</span></span></code></pre></div>
 <p>This error aims to be informative enough for the user to fix the
 problem.</p>
 </div>
@@ -478,8 +477,7 @@ created:</p>
 <span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co">#&gt; * id (integer) - an integer ID</span></span>
 <span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co">#&gt; * test (logical) - the test result</span></span>
 <span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="co">#&gt; * extra (character) - a new value</span></span>
-<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="co">#&gt; Ungrouped.</span></span>
-<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="co">#&gt; No default value.</span></span></code></pre></div>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="co">#&gt; Ungrouped.</span></span></code></pre></div>
 <p>This extended <code>iface</code> specification adds in the constraint
 for a character column named <code>extra</code> and that there must not
 be any grouping. This is used to constrain the input of another example
@@ -611,9 +609,7 @@ documentation when <code>devtools::document</code> is called:</p>
 <span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a><span class="co">#&gt; * test (logical) - the test result</span></span>
 <span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a><span class="co">#&gt; * extra (character) - a new value</span></span>
 <span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a><span class="co">#&gt; Ungrouped.</span></span>
-<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a><span class="co">#&gt; No default value.</span></span></code></pre></div>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a><span class="co">#&gt; Ungrouped.</span></span></code></pre></div>
 </div>
 <div id="type-coercion" class="section level1">
 <h1>Type coercion</h1>
@@ -645,7 +641,7 @@ is anything other than 0 or 1 for example.</p>
 <span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>    <span class="at">id=</span> <span class="fu">c</span>(<span class="st">&quot;1.1&quot;</span>,<span class="st">&quot;2&quot;</span>,<span class="st">&quot;3&quot;</span>),</span>
 <span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a>    <span class="at">test =</span> <span class="fu">c</span>(<span class="cn">TRUE</span>,<span class="cn">FALSE</span>,<span class="cn">TRUE</span>)</span>
 <span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>  )))</span>
-<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a><span class="co">#&gt; Error : input column `id` in function parameter `example_fn(mydata = ?)` cannot be coerced to a integer: not a true integer input</span></span></code></pre></div>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a><span class="co">#&gt; Error : input column `id` in function parameter `example_fn(mydata = ?)` cannot be coerced to a integer: rounding detected</span></span></code></pre></div>
 <p>Factors might have allowable levels as well. For this we define them
 as an <code>enum</code> which accepts a list of values, which then must
 be matched by the levels of a provided factor. The order of the levels
@@ -731,7 +727,8 @@ specific levels.</td>
 </tr>
 <tr class="even">
 <td align="left">group_unique</td>
-<td align="left">Coerce to a unique value.</td>
+<td align="left">Coerce to a unique value within the current grouping
+structure.</td>
 </tr>
 <tr class="odd">
 <td align="left">in_range</td>
@@ -769,6 +766,10 @@ in a set range</td>
 <tr class="odd">
 <td align="left">proportion</td>
 <td align="left">Coerce to a number between 0 and 1</td>
+</tr>
+<tr class="even">
+<td align="left">unique_id</td>
+<td align="left">A globally unique ids.</td>
 </tr>
 </tbody>
 </table>

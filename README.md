@@ -1,11 +1,13 @@
-
-# interfacer
+# interfacer <a href="https://bristol-vaccine-centre.github.io/interfacer/"><img src="man/figures/logo.svg" align="right" height="139" alt="interfacer website" /></a>
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/bristol-vaccine-centre/interfacer/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/bristol-vaccine-centre/interfacer/actions/workflows/R-CMD-check.yaml)
 [![DOI](https://zenodo.org/badge/667791472.svg)](https://zenodo.org/badge/latestdoi/667791472)
 [![interfacer status
 badge](https://bristol-vaccine-centre.r-universe.dev/badges/interfacer)](https://bristol-vaccine-centre.r-universe.dev)
+[![CRAN status](https://www.r-pkg.org/badges/version/interfacer)](https://CRAN.R-project.org/package=interfacer)
+[![metacran downloads](https://cranlogs.r-pkg.org/badges/last-week/interfacer)](https://cran.r-project.org/package=interfacer)
+[![EPSRC badge](https://img.shields.io/badge/EPSRC%20grant-EP%2FY028392%2F1-05acb5)](https://gow.epsrc.ukri.org/NGBOViewGrant.aspx?GrantRef=EP/Y028392/1)
 <!-- badges: end -->
 
 `interfacer` is primarily aimed at R package developers. It provides a framework
@@ -118,3 +120,9 @@ specified.
 `interfacer` also includes tools to help developers adopt `iface` specifications
 by generating them from example data, and for documenting dataframes bundled in
 a package.
+
+## Funding
+
+The authors gratefully acknowledge the support of the UK Research and Innovation
+AI programme of the Engineering and Physical Sciences Research Council [EPSRC
+grant EP/Y028392/1](https://gow.epsrc.ukri.org/NGBOViewGrant.aspx?GrantRef=EP/Y028392/1).

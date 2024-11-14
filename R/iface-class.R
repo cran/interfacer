@@ -3,16 +3,16 @@
 #' An `iface` specification defines the expected structure of a dataframe, in
 #' terms of the column names, column types, grouping structure and uniqueness
 #' constraints that the dataframe must conform to. A dataframe can be tested
-#' for conformance to an `iface` specification using `iconvert`.
+#' for conformance to an `iface` specification using [ivalidate()].
 #' 
 #' An `iface` specification is designed to be used to define the type of a
 #' parameter in a function. This is done by using the `iface` specification as
 #' the default value of the parameter in the function definition. The definition
-#' can then be validated at runtime by a call to `ivalidate(...)` inside the
+#' can then be validated at runtime by a call to [ivalidate()] inside the
 #' function.
 #' 
 #' When developing a function output an `iface` specification may also be used
-#' in `ireturn(...)` to enforce that the output of a function is correct.
+#' in [ireturn()] to enforce that the output of a function is correct.
 #' 
 #' `iface` definitions can be printed and included in `roxygen2` documentation
 #' and help us to document input dataframe parameters and dataframe return
@@ -228,26 +228,25 @@ format.iface = function(x, ...) {
   allow_other = attr(x,"allow_other")
   default = attr(x,"default")
   if (!is.null(default)) opt = "A default value is defined."
-  else  opt = "No default value."
+  else  opt = NULL
   
   
   if (allow_other) {
-    if (length(grps)==0) g = "No mandatory groupings."
-    else g = sprintf("Must be grouped by: %s (and other groupings allowed).",paste0(grps,collapse = " + "))
+    if (length(grps)==0) g = "Any grouping allowed."
+    else g = sprintf("Minimally grouped by: %s (and other groupings allowed).",paste0(grps,collapse = " + "))
   } else {
     if (length(grps)==0) g = "Ungrouped."
     else g = sprintf("Must be grouped by: %s (exactly).",paste0(grps,collapse = " + "))
   }
   
-  paste0(c(
+  trimws(paste0(c(
     "A dataframe containing the following columns: ",
     "",
     glue::glue_data(x, "* {name} ({type}) - {doc}"),
     "",
     g,
-    "",
     opt
-  ),collapse="\n")
+  ),collapse="\n"))
 }
 
 #' @inherit format.iface
@@ -298,7 +297,7 @@ as.list.iface = function(x, ..., flatten=FALSE) {
   icall = formals(fn)[[param]]
   if (is.null(icall)) {
     rlang::warn(message=c(
-      "Enclosing function does not define an interface for `",param,"`\n",
+      paste0("Enclosing function does not define an interface for `",param,"`\n"),
       "This may be because you have tried to validate the inner function in an igroup_modify."),
       .frequency = "once",
       .frequency_id = digest::digest(list(fn,param))
@@ -375,6 +374,7 @@ as.list.iface = function(x, ..., flatten=FALSE) {
     .spec_grps(spec)
   ) %>% paste0(collapse = "+")
   if (out == "") out = "<none>"
+  return(out)
 }
 
 # test a dataframe grouping for conformance to a spec and 

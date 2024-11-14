@@ -19,6 +19,7 @@
   
   # get a list of functions that match the string type
   for (type in types) {
+    # Unique key columns have already been checked. They don't have a 
     f = .find_function(type, .fname, .dname, .env)
     fs = c(fs,f)
   }
@@ -88,6 +89,17 @@
   return(paste0("`",expr,"` must evaluate to a function. it is a ",class(g)[[1]]))
 }
 
+.stack_eval_iface = function(expr) {
+  g = NULL
+  for (x in sys.frames()) { 
+    f = tryCatch(eval(str2lang(expr),envir = x),error = function(e) NULL)
+    if (!is.null(f) && is.iface(f)) return(f)
+    if (is.null(g)) g = f
+  }
+  if (is.null(g)) return(NULL)
+  return(paste0("`",expr,"` must evaluate to a iface. it is a ",class(g)[[1]]))
+}
+
 # find a (single) function for a single type spec
 # within function .fname and for parameter .dname
 .find_function = function(type, .fname, .dname, .env=rlang::caller_env()) {
@@ -99,13 +111,16 @@
   # a list specification:
   expr = type
   param = stringr::str_extract(type, "[^\\(]\\((.*)\\)",group = 1)
-  type = stringr::str_extract(type, "^([^\\(]+)",group = 1)
+  pkg = stringr::str_extract(type, "^([^:]+::)",group = 1)
+  if (is.na(pkg)) pkg=""
+  type = stringr::str_extract(type, "^([^:]+::)?([^\\(]+)",group = 2)
   # if not param will be NA.
   
   # first off can we interpret `type` as a function like
   # type.integer as defined in this package?
-  iface_type = sprintf("type.%s", tolower(type))
-  if (exists(iface_type,mode = "function",envir = .env)) {
+  iface_type = sprintf("%stype.%s", pkg, type)
+  f = .stack_eval(iface_type)
+  if (!is.null(f) && is.function(f)) {
     # some of these might be parameterised functions that return functions, 
     # others are not. Either way it should be possible to attempt to evaluate
     # reconstruct expression (t)
@@ -120,15 +135,16 @@
     return(f)
   }
   
-  if (tolower(type) == "list") {
+  if (type == "list") {
     # a list of things
     return(.list_test(param, .fname, .dname, .env))
   }
-   
-  if (exists(type, envir = .env) && is.iface(get(type, envir = .env))) {
+  
+  i = .stack_eval_iface(expr)
+  if (!is.null(i) && is.iface(i)) {
     # the type is an interface spec - usually nested in a list column, or
     # can be a tibble column in a tibble.
-    return(.nested_iface(get(type, envir = .env), .fname, .dname, .env))
+    return(.nested_iface(i, .fname, .dname, .env))
   }
   
   # So the type is something unusual. maybe something like `as.POSIXct`
@@ -136,7 +152,7 @@
   # we will just try and evaluate the expr with 
   # `as.` as a prefix, and then as-is if neither works we halt and catch fire.
   
-  expr2 = sprintf("as.%s",expr)
+  expr2 = sprintf("%sas.%s",pkg, type)
   f = .stack_eval(expr2)
   if (!is.null(f) && is.function(f)) return(f)
   
@@ -271,8 +287,12 @@ type.anything = function(x) {
 #' @concept rules
 #' @export
 type.integer = function(x) {
-    x = as.numeric(x)
-    if (!all(stats::na.omit(abs(x-round(x)) < .Machine$double.eps^0.5))) stop("not a true integer input", call. = FALSE) 
+    x = tryCatch(
+      as.numeric(x), 
+      error = function(e) stop("error casting to integer: ",e$message, call. = FALSE),
+      warning = function(w) stop("non numeric format", call. = FALSE)
+    )
+    if (any(stats::na.omit(abs(x-round(x)) > .Machine$double.eps^0.5))) stop("rounding detected", call. = FALSE) 
     return(as.integer(x))
 }
 
@@ -285,19 +305,26 @@ type.integer = function(x) {
 #' @concept rules
 #' @export
 type.positive_integer = function(x) {
-    x = as.numeric(x)
-    if (!all(stats::na.omit(abs(x-round(x)) < .Machine$double.eps^0.5))) stop("not a true integer input", call. = FALSE) 
+    x = type.integer(x)
     if (!all(stats::na.omit(x >= 0))) stop("negative number detected where none allowed", call. = FALSE)
-    return(as.integer(x))
+    return(x)
 }
 
 #' Coerce to a double.
 #'
+#' @param x any vector
 #' @return the input as a double, error if this would involve data loss.
 #' 
 #' @concept rules
 #' @export
-type.double = as.double
+type.double = function(x) {
+    x = tryCatch(
+      as.double(x), 
+      error = function(e) stop("error casting to numeric: ",e$message, call. = FALSE),
+      warning = function(w) stop("non numeric format", call. = FALSE)
+    )
+    return(x)
+  }
 
 #' Coerce to a number between 0 and 1
 #'
@@ -327,11 +354,19 @@ type.positive_double = function(x) {
 
 #' Coerce to a numeric.
 #'
+#' @param x any vector
 #' @return the input as a numeric, error if this would involve data loss.
 #' 
 #' @concept rules
 #' @export
-type.numeric = as.numeric
+type.numeric = function(x) {
+  x = tryCatch(
+    as.numeric(x), 
+    error = function(e) stop("error casting to numeric: ",e$message, call. = FALSE),
+    warning = function(w) stop("non numeric format", call. = FALSE)
+  )
+  return(x)
+}
 
 #' Coerce to a Date.
 #'
@@ -339,7 +374,14 @@ type.numeric = as.numeric
 #' @concept rules
 #' @return the input as a `date` vector, error if this would involve data loss.
 #' @export
-type.date = as.Date
+type.date = function(x,...) {
+  x = tryCatch(
+    as.Date(x, ...), 
+    error = function(e) stop("error casting to date: ",e$message, call. = FALSE),
+    warning = function(w) stop("non compatible date format", call. = FALSE)
+  )
+  return(x)
+}
 
 #' Coerce to a logical
 #'
@@ -351,8 +393,10 @@ type.date = as.Date
 #' @export
 type.logical = function(x) {
     if(is.null(x)) return(logical())
-    x = as.numeric(x)
-    if (!all(stats::na.omit(x) %in% c(0,1))) stop("not a true logical input", call. = FALSE)
+    if (is.numeric(x))
+      if (!all(stats::na.omit(as.numeric(x)) %in% c(0,1))) stop("rounding deteced", call. = FALSE)  
+    tmp = as.logical(x)
+    if (any(is.na(tmp) & !is.na(x))) stop("not T/F input", call. = FALSE)
     return(as.logical(x))
 }
 
@@ -378,7 +422,7 @@ type.factor = function(x) {
 #' @export
 type.character = as.character
 
-#' Coerce to a unique value.
+#' Coerce to a unique value within the current grouping structure.
 #'
 #' @param x any vector
 #'
@@ -390,6 +434,20 @@ type.group_unique = function(x) {
     if (is.null(x)) return(character())
     if (!all(!duplicated(stats::na.omit(x)))) stop("values are not unique within each group; check grouping is correct", call. = FALSE)
     x
+}
+
+#' A globally unique ids.
+#'
+#' @param x any vector
+#'
+#' @return the input.
+#' 
+#' @concept rules
+#' @export
+type.unique_id = function(x) {
+  # Uniqueness of keys is checked prior to type coercion. This function is here
+  # simply to make sure that the other rules can be applied at the same time.
+  x
 }
 
 #' Coerce to a complete set of values.

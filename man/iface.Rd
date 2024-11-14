@@ -29,17 +29,17 @@ the definition of an interface as a \code{iface} object
 An \code{iface} specification defines the expected structure of a dataframe, in
 terms of the column names, column types, grouping structure and uniqueness
 constraints that the dataframe must conform to. A dataframe can be tested
-for conformance to an \code{iface} specification using \code{iconvert}.
+for conformance to an \code{iface} specification using \code{\link[=ivalidate]{ivalidate()}}.
 }
 \details{
 An \code{iface} specification is designed to be used to define the type of a
 parameter in a function. This is done by using the \code{iface} specification as
 the default value of the parameter in the function definition. The definition
-can then be validated at runtime by a call to \code{ivalidate(...)} inside the
+can then be validated at runtime by a call to \code{\link[=ivalidate]{ivalidate()}} inside the
 function.
 
 When developing a function output an \code{iface} specification may also be used
-in \code{ireturn(...)} to enforce that the output of a function is correct.
+in \code{\link[=ireturn]{ireturn()}} to enforce that the output of a function is correct.
 
 \code{iface} definitions can be printed and included in \code{roxygen2} documentation
 and help us to document input dataframe parameters and dataframe return
@@ -48,7 +48,7 @@ values in a standardised way by using the \verb{@iparam} \code{roxygen2} tag.
 \code{iface} specifications are defined in the form of a named list of formulae with the
 structure \code{column_name = type ~ "documentation"}.
 
-\code{type} can be one of \code{anything}, \code{character}, \code{complete}, \code{date}, \code{default}, \code{double}, \code{enum}, \code{factor}, \code{finite}, \code{group_unique}, \code{in_range}, \code{integer}, \code{logical}, \code{not_missing}, \code{numeric}, \code{of_type}, \code{positive_double}, \code{positive_integer}, \code{proportion} (e.g. \code{enum(level1,level2,...)},
+\code{type} can be one of \code{anything}, \code{character}, \code{complete}, \code{date}, \code{default}, \code{double}, \code{enum}, \code{factor}, \code{finite}, \code{group_unique}, \code{in_range}, \code{integer}, \code{logical}, \code{not_missing}, \code{numeric}, \code{of_type}, \code{positive_double}, \code{positive_integer}, \code{proportion}, \code{unique_id} (e.g. \code{enum(level1,level2,...)},
 \code{in_range(min,max)}) or alternatively anything that resolves to a function e.g.
 \code{as.ordered}.
 
