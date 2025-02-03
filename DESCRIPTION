@@ -1,7 +1,7 @@
 Package: interfacer
 Title: Define and Enforce Contracts for Dataframes as Function
         Parameters
-Version: 0.3.2
+Version: 0.3.3
 Authors@R: 
     person("Robert", "Challen", , "rob.challen@bristol.ac.uk", role = c("aut", "cre", "cph"),
            comment = c(ORCID = "0000-0002-5504-7768"))
@@ -26,13 +26,13 @@ Suggests: rmarkdown, devtools, ggplot2, testthat (>= 3.0.0), fs, readr,
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 Depends: R (>= 2.10)
-URL: https://bristol-vaccine-centre.github.io/interfacer/,
-        https://github.com/bristol-vaccine-centre/interfacer
-BugReports: https://github.com/bristol-vaccine-centre/interfacer/issues
+URL: https://ai4ci.github.io/interfacer/,
+        https://github.com/ai4ci/interfacer
+BugReports: https://github.com/ai4ci/interfacer/issues
 NeedsCompilation: no
-Packaged: 2024-11-14 21:38:35 UTC; vp22681
+Packaged: 2025-02-03 16:42:54 UTC; vp22681
 Author: Robert Challen [aut, cre, cph]
     (<https://orcid.org/0000-0002-5504-7768>)
 Maintainer: Robert Challen <rob.challen@bristol.ac.uk>
 Repository: CRAN
-Date/Publication: 2024-11-14 21:50:11 UTC
+Date/Publication: 2025-02-03 17:10:02 UTC

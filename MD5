@@ -1,7 +1,7 @@
-04f3f65a661171be1e66ef33cd46db37 *DESCRIPTION
+0f39256a9ab7bf2d653011c9f257a80c *DESCRIPTION
 c617f1d3b6742e0f0b603bece1c5bd30 *LICENSE
 c3c4d4deed1eb72dd35d73c86c639a5a *NAMESPACE
-8ed1a22e3034d95b812e95ee84b14bf8 *NEWS.md
+46ad74e8064d9f029f74be3ce3fd8cbb *NEWS.md
 71f35ca4734b7802030a51e8ba5fc556 *R/devtools.R
 c3ed040329fec910d112033a2e7a2a12 *R/globals.R
 31064692c6452b00fb3d7083bdad3979 *R/idispatch.R
@@ -15,12 +15,12 @@ b3e8a4c0555ed0958f5026a235dccb97 *R/iproto.R
 71567b0d322e2c28a8dfc0982a42b602 *R/params_check_types.R
 a72cddddd06a4923d6de596fa9e959c1 *R/params_recycle.R
 effea94ccf710878243655a382d96a06 *R/params_resolve_missing.R
-99b7ed4246d053697ed115cb3281b267 *R/type-coerce.R
+c9b528d2aee6e99e116349fe8d114aff *R/type-coerce.R
 235676c927b2cded55a78553f6de57d3 *R/utils-dataframe.R
-54efc51990b5d03d8b6d587deb677a4f *R/utils-functions.R
+23015dd0b25495bad44d9def1ae19bbb *R/utils-functions.R
 b56ff2b193ecba52f9ec7f3b10cca008 *R/utils-pipe.R
-f291b8dd800833d0230a7c0a2169e2c0 *README.md
-70c773e69350f032deae4b335a245a21 *build/vignette.rds
+90dd0a89983ab718ef246730b00e69a0 *README.md
+1c48cc2bd8257d2e395e4dd4b17e217b *build/vignette.rds
 8dbe899231bb5ea63eac97c9e2152a04 *inst/WORDLIST
 36c230908fa9fba25eb62828cbcdcf4a *inst/doc/consistency.R
 22000ef520e900cb566fdf02c1a84201 *inst/doc/consistency.Rmd
@@ -36,7 +36,7 @@ e2a621ac315f487db796b4d67147bf69 *inst/doc/interfacer.R
 023b69d5602202899d549a663a63534c *inst/doc/interfacer.html
 62205ed30602fbb43d70b00f082e26e8 *inst/doc/nesting.R
 ec1963dccc65535f9e741a3078b30d66 *inst/doc/nesting.Rmd
-47c8f5edd06e5de33c485a84d5962316 *inst/doc/nesting.html
+b73f942177fb94d33198bef8b85f8259 *inst/doc/nesting.html
 b68276554482d6228537307e7be44bac *inst/templates/data.R.template
 b81827a82883cfd6df36021408475383 *inst/templates/interfaces.R.template
 81ac252265dcb7f33543a55d2af76ef0 *man/as.list.iface.Rd
