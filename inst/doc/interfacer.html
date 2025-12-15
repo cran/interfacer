@@ -358,8 +358,10 @@ automating documentation of dataframe inputs. This is not dissimilar
 conceptually to the definition of a table in a relational database, or
 the specification of an XML schema.</p>
 <p><code>interfacer</code> also provides capabilities that support
-checking dataframe function outputs, dispatching to functions based on
-dataframe input structure, and flexibly handling unexpectedly grouped
+checking dataframe function outputs are consistent (typically during
+development), and documenting return dataframe formats. It is also
+capable of dispatching inputs to different functions based on dataframe
+input structure, and flexibly handling unexpected grouping in input
 data.</p>
 </div>
 <div id="defining-an-interface" class="section level1">
@@ -388,7 +390,7 @@ validated to ensure it is of the right shape. We can use
 constraints.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co">#&#39; An example function</span></span>
 <span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co">#&#39;</span></span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&#39; @iparam mydata a dataframe input which should conform to `i_test`</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&#39; @iparam mydata description of a dataframe - format automatically documented</span></span>
 <span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&#39; @param another an example</span></span>
 <span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&#39; @param ... not used</span></span>
 <span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&#39;</span></span>
@@ -492,17 +494,18 @@ the output parameter are provided here:</p>
 <span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">#&#39; @param another an example   </span></span>
 <span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">#&#39; @param ... not used</span></span>
 <span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co">#&#39;</span></span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co">#&#39; @return `r i_test`</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co">#&#39; @ireturn a test output, format will be automatically documented</span></span>
 <span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="co">#&#39; @export</span></span>
 <span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>example_fn2 <span class="ot">=</span> <span class="cf">function</span>(</span>
 <span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>    <span class="at">mydata =</span> i_test_extn,</span>
 <span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>    ...</span>
 <span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>) {</span>
 <span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a>  mydata <span class="ot">=</span> <span class="fu">ivalidate</span>(mydata, ..., <span class="at">.prune =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a>  mydata <span class="ot">=</span> mydata <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="sc">-</span>extra)</span>
-<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a>  <span class="co"># check the return value conforms to a new specification</span></span>
-<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a>  <span class="fu">ireturn</span>(mydata, i_test)</span>
-<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a>}</span></code></pre></div>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">paste0</span>(<span class="st">&quot;extra column:&quot;</span>, mydata<span class="sc">$</span>extra))</span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a>  mydata <span class="ot">=</span> mydata <span class="sc">%&gt;%</span> dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="sc">-</span>extra)</span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a>  <span class="co"># check the return value conforms to a new specification</span></span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a>  <span class="fu">ireturn</span>(mydata, i_test)</span>
+<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a>}</span></code></pre></div>
 <p>In this case the <code>ivalidate</code> call prunes unneeded data
 from the dataframe, removing any extra columns, and also ensures that
 the input is not grouped in any way. (Grouping is described in more
@@ -528,10 +531,11 @@ failing data validate against <code>i_test_extn</code>:</p>
 <span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">ungroup</span>() <span class="sc">%&gt;%</span> </span>
 <span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="fu">example_fn2</span>() <span class="sc">%&gt;%</span> </span>
 <span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">glimpse</span>()</span>
-<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="co">#&gt; Rows: 3</span></span>
-<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a><span class="co">#&gt; Columns: 2</span></span>
-<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="co">#&gt; $ id   &lt;int&gt; 1, 2, 3</span></span>
-<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="co">#&gt; $ test &lt;lgl&gt; TRUE, FALSE, TRUE</span></span></code></pre></div>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="co">#&gt; [1] &quot;extra column:a&quot; &quot;extra column:b&quot; &quot;extra column:c&quot;</span></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a><span class="co">#&gt; Rows: 3</span></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="co">#&gt; Columns: 2</span></span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="co">#&gt; $ id   &lt;int&gt; 1, 2, 3</span></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="co">#&gt; $ test &lt;lgl&gt; TRUE, FALSE, TRUE</span></span></code></pre></div>
 </div>
 <div id="grouping" class="section level1">
 <h1>Grouping</h1>
@@ -610,6 +614,11 @@ documentation when <code>devtools::document</code> is called:</p>
 <span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a><span class="co">#&gt; * extra (character) - a new value</span></span>
 <span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a><span class="co">#&gt; Ungrouped.</span></span></code></pre></div>
+<p>There is a matching <code>@ireturn</code> tag which can be used
+instead of <code>@return</code> and this inspects the function looking
+for an <code>interfacer::ireturn(output, spec)</code> call and uses the
+specification to document the structure of the value returned by the
+function.</p>
 </div>
 <div id="type-coercion" class="section level1">
 <h1>Type coercion</h1>
@@ -628,10 +637,11 @@ provided numeric.</p>
 <span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a>) <span class="sc">%&gt;%</span></span>
 <span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a><span class="fu">example_fn2</span>() <span class="sc">%&gt;%</span> </span>
 <span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a>dplyr<span class="sc">::</span><span class="fu">glimpse</span>()</span>
-<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a><span class="co">#&gt; Rows: 3</span></span>
-<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a><span class="co">#&gt; Columns: 2</span></span>
-<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a><span class="co">#&gt; $ id   &lt;int&gt; 1, 2, 3</span></span>
-<span id="cb15-12"><a href="#cb15-12" tabindex="-1"></a><span class="co">#&gt; $ test &lt;lgl&gt; TRUE, FALSE, TRUE</span></span></code></pre></div>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a><span class="co">#&gt; [1] &quot;extra column:1.1&quot; &quot;extra column:1.1&quot; &quot;extra column:1.1&quot;</span></span>
+<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a><span class="co">#&gt; Rows: 3</span></span>
+<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a><span class="co">#&gt; Columns: 2</span></span>
+<span id="cb15-12"><a href="#cb15-12" tabindex="-1"></a><span class="co">#&gt; $ id   &lt;int&gt; 1, 2, 3</span></span>
+<span id="cb15-13"><a href="#cb15-13" tabindex="-1"></a><span class="co">#&gt; $ test &lt;lgl&gt; TRUE, FALSE, TRUE</span></span></code></pre></div>
 <p>Completely incorrect data types on the other hand are picked up and
 rejected. In this case the data supplied for <code>id</code> cannot be
 cast to integer without loss. Similar behaviour is seen if logical data
@@ -813,7 +823,7 @@ in this example.</p>
 <span id="cb19-13"><a href="#cb19-13" tabindex="-1"></a>tibble<span class="sc">::</span><span class="fu">tibble</span>(<span class="at">text =</span> <span class="st">&quot;SUCCESS&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">custom_eg</span>()</span>
 <span id="cb19-14"><a href="#cb19-14" tabindex="-1"></a><span class="co">#&gt; # A tibble: 1 × 1</span></span>
 <span id="cb19-15"><a href="#cb19-15" tabindex="-1"></a><span class="co">#&gt;   text   </span></span>
-<span id="cb19-16"><a href="#cb19-16" tabindex="-1"></a><span class="co">#&gt;   &lt;chr&gt;  </span></span>
+<span id="cb19-16"><a href="#cb19-16" tabindex="-1"></a><span class="co">#&gt; * &lt;chr&gt;  </span></span>
 <span id="cb19-17"><a href="#cb19-17" tabindex="-1"></a><span class="co">#&gt; 1 SUCCESS</span></span>
 <span id="cb19-18"><a href="#cb19-18" tabindex="-1"></a></span>
 <span id="cb19-19"><a href="#cb19-19" tabindex="-1"></a><span class="fu">try</span>(tibble<span class="sc">::</span><span class="fu">tibble</span>(<span class="at">text =</span> <span class="st">&quot;fail&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">custom_eg</span>())</span>

@@ -19,7 +19,7 @@ cat(print(i_test))
 ## -----------------------------------------------------------------------------
 #' An example function
 #'
-#' @iparam mydata a dataframe input which should conform to `i_test`
+#' @iparam mydata description of a dataframe - format automatically documented
 #' @param another an example
 #' @param ... not used
 #'
@@ -87,13 +87,14 @@ print(i_test_extn)
 #' @param another an example   
 #' @param ... not used
 #'
-#' @return `r i_test`
+#' @ireturn a test output, format will be automatically documented
 #' @export
 example_fn2 = function(
     mydata = i_test_extn,
     ...
 ) {
   mydata = ivalidate(mydata, ..., .prune = TRUE)
+  print(paste0("extra column:", mydata$extra))
   mydata = mydata %>% dplyr::select(-extra)
   # check the return value conforms to a new specification
   ireturn(mydata, i_test)
@@ -186,16 +187,16 @@ tmp$matches %>%
   
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  iface(
-#    col1 = double + finite ~ "A finite double",
-#    col2 = integer + in_range(0,100) ~ "an integer in the range 0 to 100 inclusive",
-#    col3 = numeric + in_range(0,10, include.max=FALSE) ~ "a numeric 0 <= x < 10",
-#    col4 = date ~ "A date",
-#    col5 = logical + not_missing ~ "A non-NA logical",
-#    col6 = logical + default(TRUE) ~ "A logical with missing (i.e. NA) values coerced to TRUE",
-#    col7 = factor ~ "Any factor",
-#    col8 = enum(`A`,`B`,`C`) + not_missing ~ "A factor with exactly 3 levels A, B and C and no NA values"
-#  )
+# iface(
+#   col1 = double + finite ~ "A finite double",
+#   col2 = integer + in_range(0,100) ~ "an integer in the range 0 to 100 inclusive",
+#   col3 = numeric + in_range(0,10, include.max=FALSE) ~ "a numeric 0 <= x < 10",
+#   col4 = date ~ "A date",
+#   col5 = logical + not_missing ~ "A non-NA logical",
+#   col6 = logical + default(TRUE) ~ "A logical with missing (i.e. NA) values coerced to TRUE",
+#   col7 = factor ~ "Any factor",
+#   col8 = enum(`A`,`B`,`C`) + not_missing ~ "A factor with exactly 3 levels A, B and C and no NA values"
+# )
 
 ## -----------------------------------------------------------------------------
 uppercase = function(x) {

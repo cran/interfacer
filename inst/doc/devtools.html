@@ -387,12 +387,14 @@ removing the relevant comment in <code>R/interfaces.R</code></p>
 there is inevitably a reminder to document your data. When you are
 embedding a dataframe <code>interfacer</code> can inspect your dataframe
 and generate a template data documentation into <code>R/data.R</code> at
-the same this as embedding the data.</p>
+the same this as embedding the data to ease this pain.</p>
 <p>This is triggered with a call to, for example,
 <code>interfacer::use_dataframe(mtcars)</code> which will create an
 entry in <code>R/data.R</code> for your dataframe documentation.</p>
 <p>This function uses the <code>interfacer</code> framework to generate
-the documentation but does not need it afterwards.</p>
+the documentation but does not need it afterwards, so you can use this
+without putting interfacer in your description file, if that is all you
+want to use the package for.</p>
 </div>
 <div id="roxygen2-documentation" class="section level1">
 <h1><code>roxygen2</code> documentation</h1>
@@ -419,12 +421,13 @@ specification from the current function and parameter. A more flexible
 alternative is provided by <code>idocument()</code> which allows you to
 specify the function and parameter you wish to document. This is useful
 if documenting a generic function that may dispatch to multiple
-functions based on the dataframe structures.</p>
+functions based on the dataframe structures. In the future we will try
+and automate this.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># This may be defined in the file R/interfaces.R</span></span>
 <span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>i_type1 <span class="ot">=</span> interfacer<span class="sc">::</span><span class="fu">iface</span>(<span class="at">col1 =</span> integer <span class="sc">~</span> <span class="st">&quot;An integer value&quot;</span>)</span>
 <span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>i_type2 <span class="ot">=</span> interfacer<span class="sc">::</span><span class="fu">iface</span>(<span class="at">col1 =</span> date <span class="sc">~</span> <span class="st">&quot;A date value&quot;</span>)</span>
 <span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a></span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co">#&#39; A mulitple dispatch function</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co">#&#39; A multiple dispatch function</span></span>
 <span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&#39; </span></span>
 <span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co">#&#39; @param df An input dataframe conforming to one of:</span></span>
 <span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&#39; `r interfacer::idocument(test_function.type1, df)`</span></span>
@@ -446,27 +449,31 @@ functions based on the dataframe structures.</p>
 <span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a>test_function.type1 <span class="ot">=</span> <span class="cf">function</span>(<span class="at">df =</span> i_type2) {</span>
 <span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a>  <span class="co"># ... deal with date input ...</span></span>
 <span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a>}</span></code></pre></div>
+<p>Return values using the <code>roxygen2</code> <code>@ireturn</code>
+tag that picks up format definitions from the (first) call to
+<code>ireturn(value, spec)</code> in the function body. This is then
+used to describe the format of the output dataframe.</p>
 <p>If, as in the previous example, the <code>iface</code> definitions
 are defined as package local variables it is also possible to refer
 directly to these variables in the documentation where they will be
-expanded to their definition. This is also the recommended way to
-document return values:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># This may be defined in the file R/interfaces.R</span></span>
+expanded to their definition.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># This can be defined in another file such as R/interfaces.R</span></span>
 <span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>i_input_type <span class="ot">=</span> interfacer<span class="sc">::</span><span class="fu">iface</span>(<span class="at">col1 =</span> integer <span class="sc">~</span> <span class="st">&quot;An integer value&quot;</span>)</span>
 <span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>i_return_type <span class="ot">=</span> interfacer<span class="sc">::</span><span class="fu">iface</span>(<span class="at">output =</span> date <span class="sc">~</span> <span class="st">&quot;A date value&quot;</span>)</span>
 <span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a></span>
 <span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&#39; An example function</span></span>
 <span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&#39; </span></span>
-<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&#39; @param df An input dataframe conforming to:</span></span>
-<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&#39; `r i_input_type` </span></span>
-<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&#39;</span></span>
-<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&#39; @return a dataframe of the following format: </span></span>
-<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&#39; `r i_return_type`</span></span>
-<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a>test_function <span class="ot">=</span> <span class="cf">function</span>(<span class="at">df =</span> i_input_type) {</span>
-<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a>  df <span class="ot">=</span> interfacer<span class="sc">::</span><span class="fu">ivalidate</span>(df)</span>
-<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a>  <span class="co"># ... main function body ...</span></span>
-<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a>  interfacer<span class="sc">::</span><span class="fu">ireturn</span>( ...output... , i_return_type)</span>
-<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a>}</span></code></pre></div>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&#39; The parameter and return values will be expanded to describe the</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&#39; input and output dataframe formats defined above.</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&#39; </span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&#39; @iparam df An input dataframe</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&#39; @ireturn A description of the output dataframe</span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&#39; </span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a>test_function <span class="ot">=</span> <span class="cf">function</span>(<span class="at">df =</span> i_input_type) {</span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a>  df <span class="ot">=</span> interfacer<span class="sc">::</span><span class="fu">ivalidate</span>(df)</span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a>  <span class="co"># ... main function body ...</span></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a>  interfacer<span class="sc">::</span><span class="fu">ireturn</span>( ...output... , i_return_type)</span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a>}</span></code></pre></div>
 </div>
 
 

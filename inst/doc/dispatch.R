@@ -62,103 +62,36 @@ tmp2 = tibble::tibble(
 tmp2 %>% disp_example()
 
 ## -----------------------------------------------------------------------------
-
-# generic type 1 input
-i_input_1 = iface(
-  x = integer ~ "the positives",
-  n = default(100) + integer ~ "the total"
-)
-
-# generic type 2 input
-i_input_2 = iface(
-  p = proportion ~ "the proportion",
-  n = default(100) + integer ~ "the total"
-)
-
-# more detailed combined type 1 and 2 input
-i_interim = iface(
-  i_input_1,
-  i_input_2
-)
-
-# most detailed input format
-i_final = iface(
-  i_interim,
-  lower = double ~ "wilson lower CI",
-  upper = double ~ "wilson lower CI",
-  mean = double ~ "wilson mean"
-)
-
-# final target output format
-i_target = iface(
-  i_final,
-  label = character ~ "a printable label"
-)
-
-# processes input of type 1 and 
-process.input_1 = function(x = i_input_1,...) {
-  message("process input 1")
-  ireturn(x %>% dplyr::mutate(p = x/n), iface = i_interim)
-}
-
-process.input_2 = function(x = i_input_2,...) {
-  message("process input 2")
-  ireturn(x %>% dplyr::mutate(x = floor(p*n)), iface = i_interim)
-}
-
-process.interim = function(x) {
-  message("process interim")
-  ireturn(x %>% dplyr::mutate(binom::binom.wilson(x,n)), iface = i_final)
-}
-
-process.final = function(x) {
-  message("process final")
-  ireturn(x %>% dplyr::mutate(label = sprintf("%1.1f%% [%1.1f%% - %1.1f%%] (%d/%d)", 
-    mean*100, lower*100, upper*100, x, n)), iface = i_target)
-}
-
-process = function(x,...) {
-  # this test must be at the front to prevent infinite recursion
-  if (itest(x, i_target)) return(x)
-  out = idispatch(x,
-    process.final = i_final,
-    process.interim = i_interim,
-    process.input_2 = i_input_2,
-    process.input_1 = i_input_1
-  )
-  return(process(out))
-}
-
-
-## -----------------------------------------------------------------------------
-# tibble::tibble(x=c(10,30), n=c(NA,50)) %>% itest(i_input_1)
-process(tibble::tibble(x=c(10,30), n=c(NA,50))) %>% dplyr::glimpse()
-
-## -----------------------------------------------------------------------------
-# tibble::tibble(p=0.15,n=1000) %>% itest(i_input_2)
-process(tibble::tibble(p=0.15,n=1000)) %>% dplyr::glimpse()
-
-## -----------------------------------------------------------------------------
+ # This specification requires that the dataframe is grouped only by the color
+ # column
 i_diamond_price = interfacer::iface(
-  color = enum(`D`,`E`,`F`,`G`,`H`,`I`,`J`, .ordered=TRUE) ~ "the color column",
-  price = integer ~ "the price column",
-  .groups = ~ color
-)
+   color = enum(`D`,`E`,`F`,`G`,`H`,`I`,`J`, .ordered=TRUE) ~ "the color column",
+   price = integer ~ "the price column",
+   .groups = ~ color
+ )
 
 ## -----------------------------------------------------------------------------
- # exported function in package
- # at param can use `r idocument(ex_mean, df)` for documentation
- ex_mean = function(df = i_diamond_price, extra_param = ".") {
+# An example function which would be exported in a package
+# This function expects a dataframe with a colour and price column, grouped
+# by price.
+mean_price_by_colour = function(df = i_diamond_price, extra_param = ".") {
 
-   # dispatch based on groupings:
+   # When called with a dataframe with extra groups `igroup_process` will
+   # regroup the dataframe according to the structure
+   # defined for `i_diamond_price` and apply the inner function to each group
+   # after first calling `ivalidate` on each group.
+
    igroup_process(df,
-
      # the real work of this function is provided as an anonymous inner
-     # function (but can be any other function e.g. package private function)
-     # or a purrr style lambda.
+     # function (but can be any other function e.g. package private function
+     # but not a purrr style lambda). Ideally this function parameters are named the
+     # same as the enclosing function (here `mean_price_by_colour(df,extra_param)`), however
+     # there is some flexibility here. The special `.groupdata` parameter will
+     # be populated with the values of the unexpected grouping.
 
-     function(df, extra_param) {
+     function(df, extra_param, .groupdata) {
        message(extra_param, appendLF = FALSE)
+       if (nrow(.groupdata) == 0) message("N.B. zero length group data")
        return(df %>% dplyr::summarise(mean_price = mean(price)))
      }
 
@@ -166,17 +99,41 @@ i_diamond_price = interfacer::iface(
  }
 
 ## -----------------------------------------------------------------------------
-# The correctly grouped dataframe
+# The correctly grouped dataframe. The `ex_mean` function calculates the mean
+ # price for each `color` group.
+ ggplot2::diamonds %>%
+   dplyr::group_by(color) %>%
+   mean_price_by_colour(extra_param = "without additional groups... ") %>%
+   dplyr::glimpse()
+
+## -----------------------------------------------------------------------------
 ggplot2::diamonds %>%
-  dplyr::group_by(color) %>%
-  ex_mean(extra_param = "without additional groups...") %>%
+  dplyr::group_by(cut, color, clarity) %>%
+  mean_price_by_colour() %>%
   dplyr::glimpse()
 
 ## -----------------------------------------------------------------------------
-# The incorrectly grouped dataframe
-ggplot2::diamonds %>%
-  dplyr::group_by(cut, color) %>%
-  ex_mean() %>%
-  dplyr::glimpse()
+ recursive_example = function(df = i_diamond_price) {
 
+   # call enclosing function recursively if additional groups detected
+   igroup_process(df)
+   
+   # code after this point is only executed if the grouping is correct
+   # it will be executed once per additional group.
+   # it must return a dataframe
+   return(tibble::tibble("rows detected:"=nrow(df)))
+   
+ }
+
+# this input is grouped as the specification is expecting
+# the i_group_process does nothing.
+ ggplot2::diamonds %>% dplyr::group_by(color) %>%
+    recursive_example() %>%
+    dplyr::glimpse()
+ 
+# this input has additional grouping beyond the specification but is handled 
+# gracefully
+ ggplot2::diamonds %>% dplyr::group_by(cut,clarity,color) %>%
+    recursive_example() %>%
+    dplyr::glimpse()
 
